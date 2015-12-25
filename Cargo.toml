@@ -4,3 +4,9 @@ version = "0.1.0"
 authors = ["Aleksey Kladov <aleksey.kladov@gmail.com>"]
 
 [dependencies]
+env_logger = "0.3"
+log = "0.3"
+
+[dependencies.glium]
+version = "0.13"
+features = ["glutin"]
