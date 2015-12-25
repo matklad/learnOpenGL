@@ -8,6 +8,7 @@ extern crate glium;
 
 mod result;
 mod app;
+mod vertex;
 
 pub use result::{AppError, Result};
 pub use app::App;
