@@ -3,13 +3,20 @@ use std::{self, fmt};
 use std::borrow::Borrow;
 
 use glium;
+use glium::program::ProgramCreationError;
+use glium::vertex::BufferCreationError;
 
+pub type Result<T> = std::result::Result<T, AppError>;
 
 #[derive(Debug)]
 pub enum AppError {
     InitializationError {
         cause: Box<Error>,
     },
+    ShaderError {
+        cause: ProgramCreationError,
+    },
+    DrawError(String),
     MiscError(String),
 }
 
@@ -19,6 +26,8 @@ impl fmt::Display for AppError {
             AppError::InitializationError { ref cause } => {
                 write!(f, "Initialization error: {}", cause)
             }
+            AppError::ShaderError { ref cause } => write!(f, "Shader error: {}", cause),
+            AppError::DrawError(ref s) => write!(f, "Draw error: {}", s),
             AppError::MiscError(ref s) => write!(f, "Error: {}", s),
         }
     }
@@ -28,6 +37,9 @@ impl Error for AppError {
     fn description(&self) -> &str {
         match *self {
             AppError::InitializationError { ref cause } => cause.description(),
+            AppError::ShaderError { ref cause } => cause.description(),
+
+            AppError::DrawError(ref s) => s,
             AppError::MiscError(ref s) => s,
         }
     }
@@ -35,8 +47,15 @@ impl Error for AppError {
     fn cause(&self) -> Option<&Error> {
         match *self {
             AppError::InitializationError { ref cause } => Some(cause.borrow()),
-            AppError::MiscError(_) => None,
+            AppError::ShaderError { ref cause } => Some(cause),
+            AppError::MiscError(..) | AppError::DrawError(..) => None,
         }
+    }
+}
+
+impl From<ProgramCreationError> for AppError {
+    fn from(e: ProgramCreationError) -> AppError {
+        AppError::ShaderError { cause: e }
     }
 }
 
@@ -46,4 +65,14 @@ impl From<glium::SwapBuffersError> for AppError {
     }
 }
 
-pub type Result<T> = std::result::Result<T, AppError>;
+impl From<BufferCreationError> for AppError {
+    fn from(_: BufferCreationError) -> AppError {
+        AppError::MiscError("Failed to create a vertex buffer".to_owned())
+    }
+}
+
+impl From<glium::DrawError> for AppError {
+    fn from(e: glium::DrawError) -> AppError {
+        AppError::MiscError(e.to_string())
+    }
+}
