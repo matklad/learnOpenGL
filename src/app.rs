@@ -1,6 +1,6 @@
 use glium::{DisplayBuild, Surface};
 use glium::backend::glutin_backend::GlutinFacade;
-use glium::glutin::{WindowBuilder, GlProfile, Event};
+use glium::glutin::{WindowBuilder, GlProfile, Event, VirtualKeyCode};
 
 use {AppError, Result};
 
@@ -20,12 +20,14 @@ impl App {
     fn main_loop(&self) -> Result<()> {
         loop {
             let mut target = self.facade.draw();
-            target.clear_color(0.0, 0.0, 1.0, 1.0);
+            target.clear_color(0.2, 0.35, 0.35, 1.0);
             try!(target.finish());
 
             for ev in self.facade.poll_events() {
                 match ev {
-                    Event::Closed => return Ok(()),
+                    Event::Closed | Event::KeyboardInput(_, _, Some(VirtualKeyCode::Escape)) => {
+                        return Ok(())
+                    }
                     _ => {}
                 }
             }
