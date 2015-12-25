@@ -10,6 +10,8 @@ use std::io::Write;
 
 use env_logger::LogBuilder;
 use glium::{index, Surface, Program, VertexBuffer, DrawError};
+use glium::DrawParameters;
+use glium::PolygonMode;
 use glium::vertex::BufferCreationError;
 use glium::backend::Facade;
 
@@ -41,11 +43,17 @@ struct Matisse {
 }
 
 impl Painter for Matisse {
+    #[cfg_attr(rustfmt, rustfmt_skip)]
     fn new<F: Facade>(facade: &F) -> Result<Matisse, BufferCreationError> {
-        let vertex1 = Vertex::new(-0.5, -0.5);
-        let vertex2 = Vertex::new(0.0, 0.5);
-        let vertex3 = Vertex::new(0.5, -0.25);
-        let shape = vec![vertex1, vertex2, vertex3];
+        let shape = Vertex::many(vec![
+             0.5,  0.5, 0.0,  // Top Right
+             0.5, -0.5, 0.0,  // Bottom Right
+            -0.5,  0.5, 0.0,  // Top Left
+
+             0.5, -0.5, 0.0,  // Bottom Right
+            -0.5, -0.5, 0.0,  // Bottom Left
+            -0.5,  0.5, 0.0   // Top Left
+        ]);
 
         let vertex_buffer = try!(VertexBuffer::new(facade, &shape));
         Ok(Matisse { vertex_buffer: vertex_buffer })
@@ -57,6 +65,7 @@ impl Painter for Matisse {
 
     fn fragment_shader(&self) -> &'static str {
         include_str!("./shaders/fragment.glsl")
+
     }
 
     fn draw<S: Surface>(&self,
@@ -65,11 +74,12 @@ impl Painter for Matisse {
                         -> std::result::Result<(), DrawError> {
 
         let indices = index::NoIndices(index::PrimitiveType::TrianglesList);
+        let params = DrawParameters { polygon_mode: PolygonMode::Line, ..Default::default() };
         try!(target.draw(&self.vertex_buffer,
                          &indices,
                          &program,
                          &glium::uniforms::EmptyUniforms,
-                         &Default::default()));
+                         &params));
         Ok(())
     }
 }
