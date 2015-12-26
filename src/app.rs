@@ -33,14 +33,18 @@ impl<P: Painter> App<P> {
         Ok(())
     }
 
-    fn main_loop(&self) -> Result<()> {
+    fn main_loop(mut self) -> Result<()> {
         info!("Starting the main loop");
         let start = time::precise_time_s();
+        let mut prev_time = 0.0;
         loop {
-            let current_time = (time::precise_time_s() - start) as f32;
+            let time = (time::precise_time_s() - start) as f32;
+            let delta = time - prev_time;
+            prev_time = time;
             debug!("Loop iteration");
-            try!(self.draw(current_time));
-            if self.process_events() {
+            try!(self.draw(time));
+
+            if self.process_events(delta) {
                 return Ok(());
             }
         }
@@ -72,14 +76,14 @@ impl<P: Painter> App<P> {
         Ok(())
     }
 
-    fn process_events(&self) -> bool {
+    fn process_events(&mut self, delta: f32) -> bool {
         for ev in self.facade.poll_events() {
             debug!("Event {:?}", ev);
             match ev {
                 Event::Closed | Event::KeyboardInput(_, _, Some(VirtualKeyCode::Escape)) => {
                     return true;
                 }
-                _ => {}
+                _ => self.painter.process_event(ev, delta),
             }
         }
         false
@@ -91,6 +95,7 @@ fn build_display() -> Result<GlutinFacade> {
         .with_dimensions(800, 600)
         .with_depth_buffer(24)
         .with_gl_profile(GlProfile::Core)
+        .with_vsync()
         .build_glium()
         .map_err(|e| AppError::InitializationError { cause: Box::new(e) })
 }

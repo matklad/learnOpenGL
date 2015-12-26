@@ -1,6 +1,7 @@
 use std::error::Error;
 
 use glium::{Surface, Program, DrawError, DrawParameters};
+use glium::glutin::Event;
 use glium::backend::Facade;
 
 
@@ -9,6 +10,9 @@ pub trait Painter: Sized {
     fn vertex_shader(&self) -> &str;
     fn fragment_shader(&self) -> &str;
     fn draw<S: Surface>(&self, api: &mut Api<S>) -> Result<(), DrawError>;
+    fn process_event(&mut self, _event: Event, _delta: f32) {
+
+    }
 }
 
 pub struct Api<'a, S: Surface + 'a> {

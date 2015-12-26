@@ -7,7 +7,7 @@ pub use cgmath::{vec3, deg, EuclideanVector};
 
 pub type Vec3 = Vector3<f32>;
 
-pub struct Mat4(Matrix4<f32>);
+pub struct Mat4(pub Matrix4<f32>);
 
 pub const X: Vec3 = Vec3 {
     x: 1.0,

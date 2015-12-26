@@ -14,8 +14,9 @@ use glium::backend::Facade;
 use glium::texture::Texture2d;
 use glium::index::{NoIndices, PrimitiveType};
 use glium::{Surface, VertexBuffer, DrawError};
+use glium::glutin::Event;
 
-use lights::{App, Api, Painter, load_texture_jpeg, load_texture_png, slurp, slurp_bytes};
+use lights::{App, Api, Painter, load_texture_jpeg, load_texture_png, slurp, slurp_bytes, Camera};
 use lights::math::*;
 
 mod vertex;
@@ -45,6 +46,7 @@ fn run() -> Result<(), Box<std::error::Error>> {
 }
 
 struct Matisse {
+    camera: Camera,
     vertex_shader: String,
     fragment_shader: String,
     vertex_buffer: VertexBuffer<Vertex>,
@@ -68,6 +70,7 @@ impl Painter for Matisse {
                            .expect("Failed to load container texture");
         info!("... textures loaded!");
         Ok(Matisse {
+            camera: Camera::new(vec3(0.0, 0.0, 3.0), vec3(0.0, 0.0, 0.0), Y),
             vertex_shader: slurp("./src/bin/shaders/vertex.glsl"),
             fragment_shader: slurp("./src/bin/shaders/fragment.glsl"),
             vertex_buffer: vertex_buffer,
@@ -82,6 +85,10 @@ impl Painter for Matisse {
 
     fn fragment_shader(&self) -> &str {
         &self.fragment_shader
+    }
+
+    fn process_event(&mut self, event: Event, delta: f32) {
+        self.camera.process_event(event, delta)
     }
 
     fn draw<S: Surface>(&self, api: &mut Api<S>) -> std::result::Result<(), DrawError> {
@@ -103,19 +110,13 @@ impl Painter for Matisse {
                             .rotate(Z, deg(i as f32 * 10.0))
                             .rotate(vec3(0.5, 1.0, 0.0), deg(-55.0) * api.time);
 
-            let radius = 10.0;
-            let view = look_at(
-                vec3(api.time.sin(), 0.0, api.time.cos()) * radius,
-                vec3(0.0, 0.0, 0.0),
-                Y
-            );
             let projection = perspective(deg(45.0), api.aspect_ratio, 0.1, 100.0);
 
             let uniforms = uniform! {
                 tex1: &self.texture1,
                 tex2: &self.texture2,
                 model: model,
-                view: view,
+                view: self.camera.view(),
                 projection: projection
             };
 
