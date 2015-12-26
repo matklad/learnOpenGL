@@ -11,9 +11,8 @@ use std::io::prelude::*;
 
 use env_logger::LogBuilder;
 use glium::backend::Facade;
-use glium::DrawParameters;
 use glium::texture::Texture2d;
-use glium::index::{IndexBuffer, PrimitiveType};
+use glium::index::{NoIndices, PrimitiveType};
 use glium::{Surface, VertexBuffer, DrawError};
 
 use lights::{App, Api, Painter, load_texture_jpeg, load_texture_png, slurp, slurp_bytes};
@@ -49,30 +48,15 @@ struct Matisse {
     vertex_shader: String,
     fragment_shader: String,
     vertex_buffer: VertexBuffer<Vertex>,
-    index_buffer: IndexBuffer<u16>,
     texture1: Texture2d,
     texture2: Texture2d,
-}
-
-fn prepare_shape<F: Facade>(facade: &F)
-    -> Result<(VertexBuffer<Vertex>, IndexBuffer<u16>), Box<Error>> {
-    let shape = Vertex::many(models::rectangle());
-    let indices = vec![
-        0, 1, 3,
-        1, 2, 3
-    ];
-
-    let vertex_buffer = try!(VertexBuffer::new(facade, &shape));
-    let index_buffer = IndexBuffer::new(facade, PrimitiveType::TrianglesList, &indices)
-        .expect("failed to crate an index buffer");
-
-    Ok((vertex_buffer, index_buffer))
 }
 
 
 impl Painter for Matisse {
     fn new<F: Facade>(facade: &F) -> Result<Matisse, Box<Error>> {
-        let (vertex_buffer, index_buffer) = try!(prepare_shape(facade));
+        let shape = Vertex::many(models::cube());
+        let vertex_buffer = try!(VertexBuffer::new(facade, &shape));
 
         info!("Start loading textures...");
         let image1 = load_texture_jpeg(&slurp_bytes("./src/bin/textures/container.jpg"));
@@ -87,7 +71,6 @@ impl Painter for Matisse {
             vertex_shader: slurp("./src/bin/shaders/vertex.glsl"),
             fragment_shader: slurp("./src/bin/shaders/fragment.glsl"),
             vertex_buffer: vertex_buffer,
-            index_buffer: index_buffer,
             texture1: texture1,
             texture2: texture2,
         })
@@ -103,9 +86,7 @@ impl Painter for Matisse {
 
     fn draw<S: Surface>(&self, api: &mut Api<S>) -> std::result::Result<(), DrawError> {
 
-        let params = DrawParameters { ..Default::default() };
-
-        let model = id().rotate(X, deg(-55.0));
+        let model = id().rotate(vec3(0.5, 1.0, 0.0), deg(-55.0) * api.time);
         let view = id().translate(Z * -3.0);
         let projection = perspective(deg(45.0), api.aspect_ratio, 0.1, 100.0);
 
@@ -118,10 +99,10 @@ impl Painter for Matisse {
         };
 
         try!(api.surface.draw(&self.vertex_buffer,
-                              &self.index_buffer,
+                              &NoIndices(PrimitiveType::TrianglesList),
                               api.program,
                               &uniforms,
-                              &params));
+                              &api.default_params));
         Ok(())
     }
 }

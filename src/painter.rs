@@ -1,6 +1,6 @@
 use std::error::Error;
 
-use glium::{Surface, Program, DrawError};
+use glium::{Surface, Program, DrawError, DrawParameters};
 use glium::backend::Facade;
 
 
@@ -16,4 +16,5 @@ pub struct Api<'a, S: Surface + 'a> {
     pub program: &'a Program,
     pub aspect_ratio: f32,
     pub time: f32,
+    pub default_params: DrawParameters<'static>,
 }

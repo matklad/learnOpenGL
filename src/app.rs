@@ -1,4 +1,5 @@
-use glium::{DisplayBuild, Surface, Program};
+use glium::{DisplayBuild, Surface, Program, DrawParameters, Depth};
+use glium::draw_parameters::DepthTest;
 use glium::backend::glutin_backend::GlutinFacade;
 use glium::glutin::{WindowBuilder, GlProfile, Event, VirtualKeyCode};
 use time;
@@ -49,13 +50,21 @@ impl<P: Painter> App<P> {
         let mut target = self.facade.draw();
         let (width, height) = target.get_dimensions();
         let aspect_ratio = width as f32 / height as f32;
-        target.clear_color(0.2, 0.35, 0.35, 1.0);
+        target.clear_color_and_depth((0.2, 0.35, 0.35, 1.0), 1.0);
         {
             let mut api = Api {
                 surface: &mut target,
                 program: &self.program,
                 time: time,
-                aspect_ratio: aspect_ratio
+                aspect_ratio: aspect_ratio,
+                default_params: DrawParameters {
+                    depth: Depth {
+                        test: DepthTest::IfLess,
+                        write: true,
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                },
             };
             try!(self.painter.draw(&mut api));
         }

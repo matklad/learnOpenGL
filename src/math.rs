@@ -1,6 +1,6 @@
 use cgmath::{Basis3, Rotation3, Matrix4, Vector3};
 
-use cgmath::{self, Rad};
+use cgmath::{self, Rad, EuclideanVector};
 use glium::uniforms;
 
 pub use cgmath::{vec3, deg};
@@ -40,7 +40,7 @@ impl Mat4 {
     }
 
     pub fn rotate<R: Into<Rad<f32>>>(&self, axis: Vector3<f32>, angle: R) -> Mat4 {
-        let rotation = Basis3::from_axis_angle(axis, angle.into());
+        let rotation = Basis3::from_axis_angle(axis.normalize(), angle.into());
         Mat4(self.0 * Matrix4::from(rotation.as_ref().clone()))
     }
 
