@@ -15,7 +15,7 @@ use glium::index::{NoIndices, PrimitiveType};
 use glium::{Surface, VertexBuffer, DrawError, Program};
 use glium::glutin::Event;
 
-use lights::{App, Api, Painter, slurp, Camera};
+use lights::{App, Api, Painter, load_program, Camera};
 use lights::math::*;
 
 mod vertex;
@@ -55,10 +55,7 @@ impl Painter for Matisse {
     fn new<F: Facade>(facade: &F) -> Result<Matisse, Box<Error>> {
         let shape = Vertex::many(models::cube());
         let vertex_buffer = try!(VertexBuffer::new(facade, &shape));
-        let vertex_shader = slurp("./src/bin/shaders/vertex.glsl");
-        let fragment_shader = slurp("./src/bin/shaders/fragment.glsl");
-
-        let program = try!(Program::from_source(facade, &vertex_shader, &fragment_shader, None));
+        let program = try!(load_program(facade, "vertex.glsl", "fragment.glsl"));
 
         Ok(Matisse {
             camera: Camera::new(vec3(0.0, 0.0, 3.0), vec3(0.0, 0.0, 0.0), Y),

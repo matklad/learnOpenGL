@@ -20,5 +20,5 @@ pub use result::{AppError, Result};
 pub use app::App;
 pub use painter::{Painter, Api};
 pub use textures::{load_texture_jpeg, load_texture_png};
-pub use assets::{slurp, slurp_bytes};
+pub use assets::load_program;
 pub use camera::Camera;
