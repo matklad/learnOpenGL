@@ -14,5 +14,6 @@ pub trait Painter: Sized {
 pub struct Api<'a, S: Surface + 'a> {
     pub surface: &'a mut S,
     pub program: &'a Program,
+    pub aspect_ratio: f32,
     pub time: f32,
 }

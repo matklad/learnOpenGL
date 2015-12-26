@@ -20,6 +20,7 @@ use lights::{App, Api, Painter, load_texture_jpeg, load_texture_png, slurp, slur
 use lights::math::*;
 
 mod vertex;
+mod models;
 
 use vertex::Vertex;
 
@@ -53,16 +54,9 @@ struct Matisse {
     texture2: Texture2d,
 }
 
-#[cfg_attr(rustfmt, rustfmt_skip)]
 fn prepare_shape<F: Facade>(facade: &F)
     -> Result<(VertexBuffer<Vertex>, IndexBuffer<u16>), Box<Error>> {
-    let shape = Vertex::many(vec![
-         // Positions      // Colors        // Texture Coords
-         0.5,  0.5, 0.0,   1.0, 0.0, 0.0,   1.0, 1.0,   // Top Right
-         0.5, -0.5, 0.0,   0.0, 1.0, 0.0,   1.0, 0.0,   // Bottom Right
-        -0.5, -0.5, 0.0,   0.0, 0.0, 1.0,   0.0, 0.0,   // Bottom Left
-        -0.5,  0.5, 0.0,   1.0, 1.0, 0.0,   0.0, 1.0    // Top Left
-    ]);
+    let shape = Vertex::many(models::rectangle());
     let indices = vec![
         0, 1, 3,
         1, 2, 3
@@ -73,8 +67,8 @@ fn prepare_shape<F: Facade>(facade: &F)
         .expect("failed to crate an index buffer");
 
     Ok((vertex_buffer, index_buffer))
-
 }
+
 
 impl Painter for Matisse {
     fn new<F: Facade>(facade: &F) -> Result<Matisse, Box<Error>> {
@@ -89,7 +83,6 @@ impl Painter for Matisse {
         let texture2 = glium::texture::Texture2d::new(facade, image2)
                            .expect("Failed to load container texture");
         info!("... textures loaded!");
-
         Ok(Matisse {
             vertex_shader: slurp("./src/bin/shaders/vertex.glsl"),
             fragment_shader: slurp("./src/bin/shaders/fragment.glsl"),
@@ -112,12 +105,16 @@ impl Painter for Matisse {
 
         let params = DrawParameters { ..Default::default() };
 
-        let transform = id().scale(0.5).rotate(vec3(0.0, 0.0, 1.0), Rad::turn_div_4());
+        let model = id().rotate(X, deg(-55.0));
+        let view = id().translate(Z * -3.0);
+        let projection = perspective(deg(45.0), api.aspect_ratio, 0.1, 100.0);
 
         let uniforms = uniform! {
             tex1: &self.texture1,
             tex2: &self.texture2,
-            transform: transform.into_uniform(),
+            model: model,
+            view: view,
+            projection: projection
         };
 
         try!(api.surface.draw(&self.vertex_buffer,

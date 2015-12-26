@@ -47,12 +47,15 @@ impl<P: Painter> App<P> {
 
     fn draw(&self, time: f32) -> Result<()> {
         let mut target = self.facade.draw();
+        let (width, height) = target.get_dimensions();
+        let aspect_ratio = width as f32 / height as f32;
         target.clear_color(0.2, 0.35, 0.35, 1.0);
         {
             let mut api = Api {
                 surface: &mut target,
                 program: &self.program,
                 time: time,
+                aspect_ratio: aspect_ratio
             };
             try!(self.painter.draw(&mut api));
         }
