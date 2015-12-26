@@ -25,7 +25,7 @@ impl Camera {
             eye: Point3::from_vec(eye),
             up: up,
             speed: 8.0,
-            sensitivity: 12000.0,
+            sensitivity: 20000.0,
             pitch: Deg::from(q.to_euler().0),
             yaw: Deg::from(q.to_euler().1),
             previous_mouse_position: None,

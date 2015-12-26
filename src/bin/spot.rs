@@ -52,13 +52,19 @@ struct Matisse {
 }
 
 impl Matisse {
-    fn draw_box<S: Surface>(&self, api: &mut Api<S>) -> std::result::Result<(), DrawError> {
+    fn draw_box<S: Surface>(&self,
+                            api: &mut Api<S>,
+                            light_position: Vec3)
+                            -> std::result::Result<(), DrawError> {
+        let light_position: [f32; 3] = light_position.into();
         let uniforms = uniform! {
-                model: id().rotate(Y, deg(60.0)).translate(Y * -0.3),
+                model: id().rotate(Y, deg(60.0))
+                           .translate(Y * -1.0),
                 view: self.camera.view(),
                 projection: self.projection(api),
                 object_color: [1.0f32, 0.5, 0.31],
                 light_color: [1.0f32, 1.0, 1.0],
+                light: light_position
             };
 
         try!(api.surface.draw(&self.vertex_buffer,
@@ -70,10 +76,12 @@ impl Matisse {
         Ok(())
     }
 
-    fn draw_light<S: Surface>(&self, api: &mut Api<S>) -> std::result::Result<(), DrawError> {
-        let light_pos = vec3(-1.2, 3.0, 5.0);
+    fn draw_light<S: Surface>(&self,
+                              api: &mut Api<S>,
+                              light_position: Vec3)
+                              -> std::result::Result<(), DrawError> {
         let uniforms = uniform! {
-                model: id().scale(0.2).translate(light_pos),
+                model: id().scale(0.2).translate(light_position),
                 view: self.camera.view(),
                 projection: self.projection(api),
             };
@@ -113,8 +121,13 @@ impl Painter for Matisse {
     }
 
     fn draw<S: Surface>(&self, api: &mut Api<S>) -> std::result::Result<(), DrawError> {
-        try!(self.draw_box(api));
-        try!(self.draw_light(api));
+        let radius = 8.0;
+        let light_position = vec3(api.time.sin() * radius,
+                                  2.0 * api.time.sin(),
+                                  api.time.cos() * radius);
+
+        try!(self.draw_box(api, light_position));
+        try!(self.draw_light(api, light_position));
         Ok(())
     }
 }
