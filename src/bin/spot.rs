@@ -86,23 +86,46 @@ impl Painter for Matisse {
 
     fn draw<S: Surface>(&self, api: &mut Api<S>) -> std::result::Result<(), DrawError> {
 
-        let model = id().rotate(vec3(0.5, 1.0, 0.0), deg(-55.0) * api.time);
-        let view = id().translate(Z * -3.0);
-        let projection = perspective(deg(45.0), api.aspect_ratio, 0.1, 100.0);
+        let positions = [vec3(0.0, 0.0, 0.0),
+                         vec3(2.0, 5.0, -15.0),
+                         vec3(-1.5, -2.2, -2.5),
+                         vec3(-3.8, -2.0, -12.3),
+                         vec3(2.4, -0.4, -3.5),
+                         vec3(-1.7, 3.0, -7.5),
+                         vec3(1.3, -2.0, -2.5),
+                         vec3(1.5, 2.0, -2.5),
+                         vec3(1.5, 0.2, -1.5),
+                         vec3(-1.3, 1.0, -1.5)];
 
-        let uniforms = uniform! {
-            tex1: &self.texture1,
-            tex2: &self.texture2,
-            model: model,
-            view: view,
-            projection: projection
-        };
+        for (i, &p) in positions.iter().enumerate() {
 
-        try!(api.surface.draw(&self.vertex_buffer,
-                              &NoIndices(PrimitiveType::TrianglesList),
-                              api.program,
-                              &uniforms,
-                              &api.default_params));
+            let model = id().translate(p)
+                            .rotate(Z, deg(i as f32 * 10.0))
+                            .rotate(vec3(0.5, 1.0, 0.0), deg(-55.0) * api.time);
+
+            let radius = 10.0;
+            let view = look_at(
+                vec3(api.time.sin(), 0.0, api.time.cos()) * radius,
+                vec3(0.0, 0.0, 0.0),
+                Y
+            );
+            let projection = perspective(deg(45.0), api.aspect_ratio, 0.1, 100.0);
+
+            let uniforms = uniform! {
+                tex1: &self.texture1,
+                tex2: &self.texture2,
+                model: model,
+                view: view,
+                projection: projection
+            };
+
+            try!(api.surface.draw(&self.vertex_buffer,
+                                  &NoIndices(PrimitiveType::TrianglesList),
+                                  api.program,
+                                  &uniforms,
+                                  &api.default_params));
+        }
+
         Ok(())
     }
 }
