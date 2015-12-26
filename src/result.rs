@@ -4,7 +4,6 @@ use std::borrow::Borrow;
 
 use glium;
 use glium::program::ProgramCreationError;
-use glium::vertex::BufferCreationError;
 
 pub type Result<T> = std::result::Result<T, AppError>;
 
@@ -18,6 +17,10 @@ pub enum AppError {
     },
     DrawError(String),
     MiscError(String),
+}
+
+pub fn initialization_error(err: Box<Error>) -> AppError {
+    AppError::InitializationError { cause: err }
 }
 
 impl fmt::Display for AppError {
@@ -62,12 +65,6 @@ impl From<ProgramCreationError> for AppError {
 impl From<glium::SwapBuffersError> for AppError {
     fn from(_: glium::SwapBuffersError) -> AppError {
         AppError::MiscError("Failed to swap buffers".to_owned())
-    }
-}
-
-impl From<BufferCreationError> for AppError {
-    fn from(_: BufferCreationError) -> AppError {
-        AppError::MiscError("Failed to create a vertex buffer".to_owned())
     }
 }
 

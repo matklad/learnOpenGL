@@ -4,6 +4,8 @@ use glium::glutin::{WindowBuilder, GlProfile, Event, VirtualKeyCode};
 use time;
 
 use {AppError, Result, Painter, Api};
+use result::initialization_error;
+
 
 pub struct App<P: Painter> {
     facade: GlutinFacade,
@@ -15,7 +17,7 @@ impl<P: Painter> App<P> {
     pub fn run() -> Result<()> {
         info!("Starting the application");
         let facade = try!(build_display());
-        let painter = try!(P::new(&facade));
+        let painter = try!(P::new(&facade).map_err(initialization_error));
         let program = try!(Program::from_source(&facade,
                                                 painter.vertex_shader(),
                                                 painter.fragment_shader(),
