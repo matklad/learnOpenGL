@@ -1,4 +1,4 @@
-use glium::{DisplayBuild, Surface, Program, DrawParameters, Depth};
+use glium::{DisplayBuild, Surface, DrawParameters, Depth};
 use glium::draw_parameters::DepthTest;
 use glium::backend::glutin_backend::GlutinFacade;
 use glium::glutin::{WindowBuilder, GlProfile, Event, VirtualKeyCode};
@@ -11,7 +11,6 @@ use result::initialization_error;
 pub struct App<P: Painter> {
     facade: GlutinFacade,
     painter: P,
-    program: Program,
 }
 
 impl<P: Painter> App<P> {
@@ -19,14 +18,10 @@ impl<P: Painter> App<P> {
         info!("Starting the application");
         let facade = try!(build_display());
         let painter = try!(P::new(&facade).map_err(initialization_error));
-        let program = try!(Program::from_source(&facade,
-                                                painter.vertex_shader(),
-                                                painter.fragment_shader(),
-                                                None));
+
         let app = App {
             facade: facade,
             painter: painter,
-            program: program,
         };
         try!(app.main_loop());
         info!("The application has stopped");
@@ -54,11 +49,10 @@ impl<P: Painter> App<P> {
         let mut target = self.facade.draw();
         let (width, height) = target.get_dimensions();
         let aspect_ratio = width as f32 / height as f32;
-        target.clear_color_and_depth((0.2, 0.35, 0.35, 1.0), 1.0);
+        target.clear_color_and_depth((0.0, 0.0, 0.0, 1.0), 1.0);
         {
             let mut api = Api {
                 surface: &mut target,
-                program: &self.program,
                 time: time,
                 aspect_ratio: aspect_ratio,
                 default_params: DrawParameters {
