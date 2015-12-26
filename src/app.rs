@@ -1,8 +1,9 @@
 use glium::{DisplayBuild, Surface, Program};
 use glium::backend::glutin_backend::GlutinFacade;
 use glium::glutin::{WindowBuilder, GlProfile, Event, VirtualKeyCode};
+use time;
 
-use {AppError, Result, Painter};
+use {AppError, Result, Painter, Api};
 
 pub struct App<P: Painter> {
     facade: GlutinFacade,
@@ -31,20 +32,28 @@ impl<P: Painter> App<P> {
 
     fn main_loop(&self) -> Result<()> {
         info!("Starting the main loop");
+        let start = time::precise_time_s();
         loop {
+            let current_time = (time::precise_time_s() - start) as f32;
             debug!("Loop iteration");
-            try!(self.draw());
+            try!(self.draw(current_time));
             if self.process_events() {
-                return Ok(())
+                return Ok(());
             }
         }
     }
 
-    fn draw(&self) -> Result<()> {
+    fn draw(&self, time: f32) -> Result<()> {
         let mut target = self.facade.draw();
         target.clear_color(0.2, 0.35, 0.35, 1.0);
-
-        try!(self.painter.draw(&mut target, &self.program));
+        {
+            let mut api = Api {
+                surface: &mut target,
+                program: &self.program,
+                time: time,
+            };
+            try!(self.painter.draw(&mut api));
+        }
         try!(target.finish());
         Ok(())
     }

@@ -2,20 +2,20 @@
 
 #[macro_use]
 extern crate log;
+#[macro_use]
+extern crate glium;
 extern crate env_logger;
 extern crate lights;
-extern crate glium;
 
 use std::io::Write;
 
 use env_logger::LogBuilder;
-use glium::{index, Surface, Program, VertexBuffer, DrawError};
+use glium::{index, Surface, VertexBuffer, DrawError};
 use glium::DrawParameters;
-use glium::PolygonMode;
 use glium::vertex::BufferCreationError;
 use glium::backend::Facade;
 
-use lights::{App, Painter, Vertex};
+use lights::{App, Api, Painter, Vertex};
 
 fn init_log() {
     LogBuilder::new()
@@ -68,18 +68,19 @@ impl Painter for Matisse {
 
     }
 
-    fn draw<S: Surface>(&self,
-                        target: &mut S,
-                        program: &Program)
-                        -> std::result::Result<(), DrawError> {
+    fn draw<S: Surface>(&self, api: &mut Api<S>) -> std::result::Result<(), DrawError> {
 
         let indices = index::NoIndices(index::PrimitiveType::TrianglesList);
-        let params = DrawParameters { polygon_mode: PolygonMode::Line, ..Default::default() };
-        try!(target.draw(&self.vertex_buffer,
-                         &indices,
-                         &program,
-                         &glium::uniforms::EmptyUniforms,
-                         &params));
+        let params = DrawParameters { ..Default::default() };
+
+        let uniforms = uniform!{
+             ucolor: [0.0, api.time.sin() / 2.0 + 0.5, 0.0, 1.0]
+        };
+        try!(api.surface.draw(&self.vertex_buffer,
+                              &indices,
+                              api.program,
+                              &uniforms,
+                              &params));
         Ok(())
     }
 }
