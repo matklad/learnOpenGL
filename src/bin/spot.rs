@@ -1,5 +1,4 @@
 #[deny(warnings)]
-
 #[macro_use]
 extern crate log;
 #[macro_use]
@@ -54,33 +53,41 @@ struct Matisse {
     texture2: Texture2d,
 }
 
-impl Painter for Matisse {
-    #[cfg_attr(rustfmt, rustfmt_skip)]
-    fn new<F: Facade>(facade: &F) -> Result<Matisse, Box<Error>> {
-        let shape = Vertex::many(vec![
-    // Positions          // Colors           // Texture Coords
-             0.5,  0.5, 0.0,   1.0, 0.0, 0.0,   1.0, 1.0,   // Top Right
-             0.5, -0.5, 0.0,   0.0, 1.0, 0.0,   1.0, 0.0,   // Bottom Right
-            -0.5, -0.5, 0.0,   0.0, 0.0, 1.0,   0.0, 0.0,   // Bottom Left
-            -0.5,  0.5, 0.0,   1.0, 1.0, 0.0,   0.0, 1.0    // Top Left
-        ]);
-        let indices = vec![
-            0, 1, 3,
-            1, 2, 3
-        ];
+#[cfg_attr(rustfmt, rustfmt_skip)]
+fn prepare_shape<F: Facade>(facade: &F)
+    -> Result<(VertexBuffer<Vertex>, IndexBuffer<u16>), Box<Error>> {
+    let shape = Vertex::many(vec![
+         // Positions      // Colors        // Texture Coords
+         0.5,  0.5, 0.0,   1.0, 0.0, 0.0,   1.0, 1.0,   // Top Right
+         0.5, -0.5, 0.0,   0.0, 1.0, 0.0,   1.0, 0.0,   // Bottom Right
+        -0.5, -0.5, 0.0,   0.0, 0.0, 1.0,   0.0, 0.0,   // Bottom Left
+        -0.5,  0.5, 0.0,   1.0, 1.0, 0.0,   0.0, 1.0    // Top Left
+    ]);
+    let indices = vec![
+        0, 1, 3,
+        1, 2, 3
+    ];
 
-        let vertex_buffer = try!(VertexBuffer::new(facade, &shape));
-        let index_buffer = IndexBuffer::new(facade, PrimitiveType::TrianglesList, &indices)
-            .expect("failed to crate an index buffer");
+    let vertex_buffer = try!(VertexBuffer::new(facade, &shape));
+    let index_buffer = IndexBuffer::new(facade, PrimitiveType::TrianglesList, &indices)
+        .expect("failed to crate an index buffer");
+
+    Ok((vertex_buffer, index_buffer))
+
+}
+
+impl Painter for Matisse {
+    fn new<F: Facade>(facade: &F) -> Result<Matisse, Box<Error>> {
+        let (vertex_buffer, index_buffer) = try!(prepare_shape(facade));
 
         info!("Start loading textures...");
         let image1 = load_texture_jpeg(&slurp_bytes("./src/bin/textures/container.jpg"));
         let texture1 = glium::texture::Texture2d::new(facade, image1)
-            .expect("Failed to load container texture");
+                           .expect("Failed to load container texture");
 
         let image2 = load_texture_png(&slurp_bytes("./src/bin/textures/awesomeface.png"));
         let texture2 = glium::texture::Texture2d::new(facade, image2)
-            .expect("Failed to load container texture");
+                           .expect("Failed to load container texture");
         info!("... textures loaded!");
 
         Ok(Matisse {
@@ -121,4 +128,3 @@ impl Painter for Matisse {
         Ok(())
     }
 }
-
