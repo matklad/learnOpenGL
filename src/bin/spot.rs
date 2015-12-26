@@ -1,4 +1,4 @@
-#![deny(warnings)]
+#[deny(warnings)]
 
 #[macro_use]
 extern crate log;
@@ -8,7 +8,7 @@ extern crate env_logger;
 extern crate lights;
 
 use std::error::Error;
-use std::io::Write;
+use std::io::prelude::*;
 
 use env_logger::LogBuilder;
 use glium::backend::Facade;
@@ -17,7 +17,8 @@ use glium::texture::Texture2d;
 use glium::index::{IndexBuffer, PrimitiveType};
 use glium::{Surface, VertexBuffer, DrawError};
 
-use lights::{App, Api, Painter, load_texture_jpeg};
+use lights::{App, Api, Painter, load_texture_jpeg, load_texture_png, slurp, slurp_bytes};
+use lights::math::*;
 
 mod vertex;
 
@@ -45,9 +46,12 @@ fn run() -> Result<(), Box<std::error::Error>> {
 }
 
 struct Matisse {
+    vertex_shader: String,
+    fragment_shader: String,
     vertex_buffer: VertexBuffer<Vertex>,
     index_buffer: IndexBuffer<u16>,
-    texture: Texture2d,
+    texture1: Texture2d,
+    texture2: Texture2d,
 }
 
 impl Painter for Matisse {
@@ -69,31 +73,46 @@ impl Painter for Matisse {
         let index_buffer = IndexBuffer::new(facade, PrimitiveType::TrianglesList, &indices)
             .expect("failed to crate an index buffer");
 
-        let image = load_texture_jpeg(include_bytes!("./textures/container.jpg"));
-        let texture = glium::texture::Texture2d::new(facade, image).unwrap();
+        info!("Start loading textures...");
+        let image1 = load_texture_jpeg(&slurp_bytes("./src/bin/textures/container.jpg"));
+        let texture1 = glium::texture::Texture2d::new(facade, image1)
+            .expect("Failed to load container texture");
+
+        let image2 = load_texture_png(&slurp_bytes("./src/bin/textures/awesomeface.png"));
+        let texture2 = glium::texture::Texture2d::new(facade, image2)
+            .expect("Failed to load container texture");
+        info!("... textures loaded!");
 
         Ok(Matisse {
+            vertex_shader: slurp("./src/bin/shaders/vertex.glsl"),
+            fragment_shader: slurp("./src/bin/shaders/fragment.glsl"),
             vertex_buffer: vertex_buffer,
             index_buffer: index_buffer,
-            texture: texture,
+            texture1: texture1,
+            texture2: texture2,
         })
     }
 
     fn vertex_shader(&self) -> &str {
-        include_str!("./shaders/vertex.glsl")
+        &self.vertex_shader
     }
 
-    fn fragment_shader(&self) -> &'static str {
-        include_str!("./shaders/fragment.glsl")
+    fn fragment_shader(&self) -> &str {
+        &self.fragment_shader
     }
 
     fn draw<S: Surface>(&self, api: &mut Api<S>) -> std::result::Result<(), DrawError> {
 
         let params = DrawParameters { ..Default::default() };
 
+        let transform = id().scale(0.5).rotate(vec3(0.0, 0.0, 1.0), Rad::turn_div_4());
+
         let uniforms = uniform! {
-            tex: &self.texture
+            tex1: &self.texture1,
+            tex2: &self.texture2,
+            transform: transform.into_uniform(),
         };
+
         try!(api.surface.draw(&self.vertex_buffer,
                               &self.index_buffer,
                               api.program,
@@ -102,3 +121,4 @@ impl Painter for Matisse {
         Ok(())
     }
 }
+
