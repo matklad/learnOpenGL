@@ -6,6 +6,7 @@ authors = ["Aleksey Kladov <aleksey.kladov@gmail.com>"]
 [dependencies]
 cgmath = "0.7"
 env_logger = "0.3"
+gl = "0.5"
 image = "0.6"
 log = "0.3"
 time = "0.1"
@@ -15,5 +16,5 @@ version = "0.13"
 features = ["glutin"]
 
 [[bin]]
-name = "spot"
-path = "src/bin/spot.rs"
+name = "mirror"
+path = "src/bin/mirror.rs"

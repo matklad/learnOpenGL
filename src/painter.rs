@@ -2,15 +2,14 @@ use std::error::Error;
 
 use glium::{Surface, DrawError, DrawParameters};
 use glium::glutin::Event;
-use glium::backend::Facade;
+use glium::backend::glutin_backend::GlutinFacade;
+
 
 
 pub trait Painter: Sized {
-    fn new<F: Facade>(facade: &F) -> Result<Self, Box<Error>>;
+    fn new(facade: &GlutinFacade) -> Result<Self, Box<Error>>;
     fn draw<S: Surface>(&self, api: &mut Api<S>) -> Result<(), DrawError>;
-    fn process_event(&mut self, _event: Event, _delta: f32) {
-
-    }
+    fn process_event(&mut self, _event: Event, _delta: f32) {}
 }
 
 pub struct Api<'a, S: Surface + 'a> {
