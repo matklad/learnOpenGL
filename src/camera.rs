@@ -1,5 +1,6 @@
 use glium::glutin::{Event, ElementState, VirtualKeyCode};
-use cgmath::{Point3, Point, Matrix4, Vector, Vector2, EuclideanVector, vec2, vec3, Deg, Angle};
+use cgmath::{Point3, Point, Matrix4, Vector, Vector2, EuclideanVector, vec2, vec3, Deg, Angle,
+             Quaternion};
 
 use math::{look_at, Vec3, Mat4};
 
@@ -12,22 +13,22 @@ pub struct Camera {
     speed: f32,
     sensitivity: f32,
 
-    previous_mouse_position: Vec2,
-    yaw: Deg<f32>,
+    previous_mouse_position: Option<Vec2>,
     pitch: Deg<f32>,
+    yaw: Deg<f32>,
 }
 
 impl Camera {
-    pub fn new(eye: Vec3, _center: Vec3, up: Vec3) -> Camera {
+    pub fn new(eye: Vec3, center: Vec3, up: Vec3) -> Camera {
+        let q = Quaternion::from_sv(1.0, (center - eye).normalize());
         Camera {
             eye: Point3::from_vec(eye),
-            // front: (center - eye).normalize(),
             up: up,
             speed: 8.0,
-            sensitivity: 4000.0,
-            yaw: Deg::zero(),
-            pitch: Deg::zero(),
-            previous_mouse_position: Vector2::zero(),
+            sensitivity: 12000.0,
+            pitch: Deg::from(q.to_euler().0),
+            yaw: Deg::from(q.to_euler().1),
+            previous_mouse_position: None,
         }
     }
 
@@ -68,10 +69,12 @@ impl Camera {
     }
 
     fn process_mouse(&mut self, new_position: Vec2, delta_t: f32) {
-        let delta = (new_position - self.previous_mouse_position) * self.sensitivity * delta_t;
-        self.previous_mouse_position = new_position;
-        self.yaw = self.yaw + Deg::new(delta.x);
-        self.pitch = self.pitch + Deg::new(-delta.y);
+        if let Some(prev) = self.previous_mouse_position {
+            let delta = (new_position - prev) * self.sensitivity * delta_t;
+            self.yaw = self.yaw + Deg::new(delta.x);
+            self.pitch = self.pitch + Deg::new(-delta.y);
+        }
+        self.previous_mouse_position = Some(new_position);
     }
 }
 
