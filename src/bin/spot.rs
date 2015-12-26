@@ -51,6 +51,38 @@ struct Matisse {
     light_program: Program,
 }
 
+
+impl Painter for Matisse {
+    fn new<F: Facade>(facade: &F) -> Result<Matisse, Box<Error>> {
+        let shape = Vertex::many(models::cube());
+        let vertex_buffer = try!(VertexBuffer::new(facade, &shape));
+        let program = try!(load_program(facade, "vertex.glsl", "fragment.glsl"));
+        let light_program = try!(load_program(facade, "vertex.glsl", "fragment_light.glsl"));
+
+        Ok(Matisse {
+            camera: Camera::new(vec3(0.0, 0.0, 5.0), vec3(0.0, 0.0, 0.0), Y),
+            vertex_buffer: vertex_buffer,
+            program: program,
+            light_program: light_program,
+        })
+    }
+
+    fn process_event(&mut self, event: Event, delta: f32) {
+        self.camera.process_event(event, delta)
+    }
+
+    fn draw<S: Surface>(&self, api: &mut Api<S>) -> std::result::Result<(), DrawError> {
+        let radius = 8.0;
+        let light_position = vec3(api.time.sin() * radius,
+                                  2.0 * api.time.sin(),
+                                  api.time.cos() * radius);
+
+        try!(self.draw_box(api, light_position));
+        try!(self.draw_light(api, light_position));
+        Ok(())
+    }
+}
+
 impl Matisse {
     fn draw_box<S: Surface>(&self,
                             api: &mut Api<S>,
@@ -97,37 +129,5 @@ impl Matisse {
 
     fn projection<S: Surface>(&self, api: &mut Api<S>) -> Mat4 {
         perspective(deg(45.0), api.aspect_ratio, 0.1, 100.0)
-    }
-}
-
-
-impl Painter for Matisse {
-    fn new<F: Facade>(facade: &F) -> Result<Matisse, Box<Error>> {
-        let shape = Vertex::many(models::cube());
-        let vertex_buffer = try!(VertexBuffer::new(facade, &shape));
-        let program = try!(load_program(facade, "vertex.glsl", "fragment.glsl"));
-        let light_program = try!(load_program(facade, "vertex.glsl", "fragment_light.glsl"));
-
-        Ok(Matisse {
-            camera: Camera::new(vec3(0.0, 0.0, 5.0), vec3(0.0, 0.0, 0.0), Y),
-            vertex_buffer: vertex_buffer,
-            program: program,
-            light_program: light_program,
-        })
-    }
-
-    fn process_event(&mut self, event: Event, delta: f32) {
-        self.camera.process_event(event, delta)
-    }
-
-    fn draw<S: Surface>(&self, api: &mut Api<S>) -> std::result::Result<(), DrawError> {
-        let radius = 8.0;
-        let light_position = vec3(api.time.sin() * radius,
-                                  2.0 * api.time.sin(),
-                                  api.time.cos() * radius);
-
-        try!(self.draw_box(api, light_position));
-        try!(self.draw_light(api, light_position));
-        Ok(())
     }
 }
