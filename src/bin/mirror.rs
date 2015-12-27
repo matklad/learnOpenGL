@@ -12,7 +12,7 @@ use std::io::prelude::*;
 use env_logger::LogBuilder;
 use glium::backend::glutin_backend::GlutinFacade;
 use glium::index::{NoIndices, PrimitiveType};
-use glium::{Surface, VertexBuffer, DrawError, Program};
+use glium::{Surface, VertexBuffer, DrawError, Program,  DrawParameters, Depth};
 use glium::glutin::Event;
 use glium::texture::cubemap::Cubemap;
 
@@ -22,7 +22,7 @@ use lights::math::*;
 mod vertex;
 mod models;
 
-use vertex::Vertex;
+use vertex::{Vertex, VertexNormal};
 
 fn init_log() {
     LogBuilder::new()
@@ -47,24 +47,17 @@ fn run() -> Result<(), Box<std::error::Error>> {
 
 struct Matisse {
     camera: Camera,
-    vertex_buffer: VertexBuffer<Vertex>,
-    program: Program,
-    cubemap: Cubemap,
+    skybox: SkyBox,
+    cube: Cube,
 }
-
 
 impl Painter for Matisse {
     fn new(facade: &GlutinFacade) -> Result<Matisse, Box<Error>> {
-        let shape = Vertex::many(models::skybox());
-        let vertex_buffer = try!(VertexBuffer::new(facade, &shape));
-        let program = try!(load_program(facade, "skybox/vertex.glsl", "skybox/fragment.glsl"));
-        let cubemap = load_cubemap(facade, "skybox");
 
         Ok(Matisse {
             camera: Camera::new(vec3(0.0, 0.0, 3.0), vec3(0.0, 0.0, 0.0), Y),
-            vertex_buffer: vertex_buffer,
-            program: program,
-            cubemap: cubemap,
+            skybox: try!(SkyBox::new(facade)),
+            cube: try!(Cube::new(facade)),
         })
     }
 
@@ -73,32 +66,90 @@ impl Painter for Matisse {
     }
 
     fn draw<S: Surface>(&self, api: &mut Api<S>) -> std::result::Result<(), DrawError> {
-        try!(self.draw_sky(api));
+        try!(self.skybox.draw(api, self));
+        try!(self.cube.draw(api, self));
         Ok(())
     }
 }
 
 impl Matisse {
-    fn draw_sky<S: Surface>(&self,
-                            api: &mut Api<S>)
-                            -> std::result::Result<(), DrawError> {
+    fn projection<S: Surface>(&self, api: &mut Api<S>) -> Mat4 {
+        perspective(deg(45.0), api.aspect_ratio, 0.1, 100.0)
+    }
+}
+
+struct SkyBox {
+    vertex_buffer: VertexBuffer<Vertex>,
+    program: Program,
+    cubemap: Cubemap,
+}
+
+impl SkyBox {
+    fn new(facade: &GlutinFacade) -> Result<SkyBox, Box<Error>> {
+        let shape = Vertex::many(models::skybox());
+        Ok(SkyBox {
+            vertex_buffer: try!(VertexBuffer::new(facade, &shape)),
+            program: try!(load_program(facade, "skybox/vertex.glsl", "skybox/fragment.glsl")),
+            cubemap: load_cubemap(facade, "skybox"),
+        })
+    }
+
+    fn draw<S: Surface>(&self,
+                        api: &mut Api<S>,
+                        p: &Matisse)
+                        -> std::result::Result<(), DrawError> {
         let uniforms = uniform! {
-                model: id(),
-                view: self.camera.view(),
-                projection: self.projection(api),
-                skybox: &self.cubemap,
-            };
+            view: p.camera.view(),
+            projection: p.projection(api),
+            skybox: &self.cubemap,
+        };
+
+        try!(api.surface.draw(&self.vertex_buffer,
+                              &NoIndices(PrimitiveType::TrianglesList),
+                              &self.program,
+                              &uniforms,
+                              &DrawParameters {
+                                  depth: Depth {
+                                      write: false,
+                                      ..Default::default()
+                                  },
+                                  ..api.default_params.clone()
+                              }));
+        Ok(())
+    }
+}
+
+struct Cube {
+    vertex_buffer: VertexBuffer<VertexNormal>,
+    program: Program,
+}
+
+impl Cube {
+    fn new(facade: &GlutinFacade) -> Result<Cube, Box<Error>> {
+        let shape = VertexNormal::many(models::cube());
+        Ok(Cube {
+            vertex_buffer: try!(VertexBuffer::new(facade, &shape)),
+            program: try!(load_program(facade, "cube/vertex.glsl", "cube/fragment.glsl")),
+        })
+    }
+
+    fn draw<S: Surface>(&self,
+                        api: &mut Api<S>,
+                        p: &Matisse)
+                        -> std::result::Result<(), DrawError> {
+        let uniforms = uniform! {
+            model: id(),
+            view: p.camera.view(),
+            projection: p.projection(api),
+            camera_position: p.camera.position(),
+            skybox: &p.skybox.cubemap,
+        };
 
         try!(api.surface.draw(&self.vertex_buffer,
                               &NoIndices(PrimitiveType::TrianglesList),
                               &self.program,
                               &uniforms,
                               &api.default_params));
-
         Ok(())
-    }
-
-    fn projection<S: Surface>(&self, api: &mut Api<S>) -> Mat4 {
-        perspective(deg(45.0), api.aspect_ratio, 0.1, 100.0)
     }
 }

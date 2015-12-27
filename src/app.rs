@@ -61,6 +61,7 @@ impl<P: Painter> App<P> {
                         write: true,
                         ..Default::default()
                     },
+//                    backface_culling: BackfaceCullingMode::CullClockwise,
                     ..Default::default()
                 },
             };

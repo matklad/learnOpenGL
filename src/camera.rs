@@ -32,6 +32,14 @@ impl Camera {
         }
     }
 
+    pub fn view(&self) -> Mat4 {
+        Mat4(Matrix4::look_at(self.eye, self.eye + self.front(), self.up))
+    }
+
+    pub fn position(&self) -> [f32; 3] {
+        self.eye.into()
+    }
+
     fn right(&self) -> Vec3 {
         self.front().cross(self.up).normalize()
     }
@@ -42,9 +50,6 @@ impl Camera {
              self.yaw.sin() * self.pitch.cos())
     }
 
-    pub fn view(&self) -> Mat4 {
-        Mat4(Matrix4::look_at(self.eye, self.eye + self.front(), self.up))
-    }
 
 
     pub fn process_event(&mut self, event: Event, delta_t: f32) {
