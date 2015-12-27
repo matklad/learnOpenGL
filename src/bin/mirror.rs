@@ -11,12 +11,12 @@ use std::io::prelude::*;
 
 use env_logger::LogBuilder;
 use glium::backend::glutin_backend::GlutinFacade;
-use glium::index::{NoIndices, PrimitiveType};
-use glium::{Surface, VertexBuffer, DrawError, Program,  DrawParameters, Depth};
+use glium::index::{NoIndices, PrimitiveType, IndexBuffer};
+use glium::{Surface, VertexBuffer, DrawError, Program, DrawParameters, Depth};
 use glium::glutin::Event;
 use glium::texture::cubemap::Cubemap;
 
-use lights::{App, Api, Painter, load_program, Camera, load_cubemap};
+use lights::{App, Api, Painter, load_program, Camera, load_cubemap, load_obj};
 use lights::math::*;
 
 mod vertex;
@@ -109,10 +109,7 @@ impl SkyBox {
                               &self.program,
                               &uniforms,
                               &DrawParameters {
-                                  depth: Depth {
-                                      write: false,
-                                      ..Default::default()
-                                  },
+                                  depth: Depth { write: false, ..Default::default() },
                                   ..api.default_params.clone()
                               }));
         Ok(())
@@ -121,14 +118,19 @@ impl SkyBox {
 
 struct Cube {
     vertex_buffer: VertexBuffer<VertexNormal>,
+    index_buffer: IndexBuffer<u16>,
     program: Program,
 }
 
 impl Cube {
     fn new(facade: &GlutinFacade) -> Result<Cube, Box<Error>> {
-        let shape = VertexNormal::many(models::cube());
+        let model = load_obj("bunny_with_normals.obj");
+        let shape = VertexNormal::from_obj(&model);
         Ok(Cube {
             vertex_buffer: try!(VertexBuffer::new(facade, &shape)),
+            index_buffer: IndexBuffer::new(facade, PrimitiveType::TrianglesList, &model.indices)
+                              .expect("Failed to crate an index buffer"),
+
             program: try!(load_program(facade, "cube/vertex.glsl", "cube/fragment.glsl")),
         })
     }
@@ -138,7 +140,7 @@ impl Cube {
                         p: &Matisse)
                         -> std::result::Result<(), DrawError> {
         let uniforms = uniform! {
-            model: id(),
+            model: id().scale(5.0),
             view: p.camera.view(),
             projection: p.projection(api),
             camera_position: p.camera.position(),
@@ -146,7 +148,7 @@ impl Cube {
         };
 
         try!(api.surface.draw(&self.vertex_buffer,
-                              &NoIndices(PrimitiveType::TrianglesList),
+                              &self.index_buffer,
                               &self.program,
                               &uniforms,
                               &api.default_params));

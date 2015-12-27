@@ -1,3 +1,5 @@
+use lights::Obj;
+
 #[derive(Copy, Clone)]
 pub struct Vertex {
     position: [f32; 3],
@@ -43,5 +45,18 @@ impl VertexNormal {
                  }
              })
              .collect()
+    }
+
+    pub fn from_obj(obj: &Obj) -> Vec<VertexNormal> {
+        obj.vertices
+           .iter()
+           .zip(obj.normals.iter())
+           .map(|(p, n)| {
+               VertexNormal {
+                   position: *p,
+                   normal: *n,
+               }
+           })
+           .collect()
     }
 }

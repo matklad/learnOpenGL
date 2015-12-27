@@ -9,34 +9,26 @@ use glium::texture::cubemap::Cubemap;
 use glium::texture::{UncompressedFloatFormat, MipmapsOption, Dimensions, RawImage2d};
 use gl;
 
-use image;//::{self, ImageFormat};
+use image;
+
+use {obj, Obj};
 
 type RawImage = RawImage2d<'static, u8>;
 
 
-pub fn load_program<F: Facade>(facade: &F,
-                               vertex_shader_path: &str,
-                               fragment_shader_path: &str)
-                               -> Result<Program, ProgramCreationError> {
+pub fn load_program(facade: &GlutinFacade,
+                    vertex_shader_path: &str,
+                    fragment_shader_path: &str)
+                    -> Result<Program, ProgramCreationError> {
 
     let vertex_shader = slurp(&format!("./assets/shaders/{}", vertex_shader_path));
     let fragment_shader = slurp(&format!("./assets/shaders/{}", fragment_shader_path));
     (Program::from_source(facade, &vertex_shader, &fragment_shader, None))
 }
 
-fn slurp(path: &str) -> String {
-    let mut file = File::open(path).expect(&format!("Failed to open assets file: {}", path));
-    let mut data = String::new();
-    file.read_to_string(&mut data).expect(&format!("Failed to read assets file: {}", path));
-    data
-}
-
-
-fn slurp_bytes(path: &str) -> Vec<u8> {
-    let mut file = File::open(path).expect(&format!("Failed to open assets file: {}", path));
-    let mut data = vec![];
-    file.read_to_end(&mut data).expect(&format!("Failed to read assets file: {}", path));
-    data
+pub fn load_obj(obj_file: &str) -> Obj {
+    let data = slurp(&format!("./assets/models/{}", obj_file));
+    obj::parse(&data).unwrap()
 }
 
 pub fn load_cubemap(facade: &GlutinFacade, texture_src: &str) -> Cubemap {
@@ -117,4 +109,19 @@ unsafe fn cubemap_id(faces: Vec<RawImage>, size: u32) -> u32 {
     gl::BindTexture(gl::TEXTURE_CUBE_MAP, 0);
 
     result
+}
+
+fn slurp(path: &str) -> String {
+    let mut file = File::open(path).expect(&format!("Failed to open assets file: {}", path));
+    let mut data = String::new();
+    file.read_to_string(&mut data).expect(&format!("Failed to read assets file: {}", path));
+    data
+}
+
+
+fn slurp_bytes(path: &str) -> Vec<u8> {
+    let mut file = File::open(path).expect(&format!("Failed to open assets file: {}", path));
+    let mut data = vec![];
+    file.read_to_end(&mut data).expect(&format!("Failed to read assets file: {}", path));
+    data
 }
