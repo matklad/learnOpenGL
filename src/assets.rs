@@ -19,8 +19,8 @@ pub fn load_program<F: Facade>(facade: &F,
                                fragment_shader_path: &str)
                                -> Result<Program, ProgramCreationError> {
 
-    let vertex_shader = slurp(&format!("./src/bin/shaders/{}", vertex_shader_path));
-    let fragment_shader = slurp(&format!("./src/bin/shaders/{}", fragment_shader_path));
+    let vertex_shader = slurp(&format!("./assets/shaders/{}", vertex_shader_path));
+    let fragment_shader = slurp(&format!("./assets/shaders/{}", fragment_shader_path));
     (Program::from_source(facade, &vertex_shader, &fragment_shader, None))
 }
 
@@ -45,7 +45,7 @@ pub fn load_cubemap(facade: &GlutinFacade, texture_src: &str) -> Cubemap {
     let mut size = 0;
     let faces = parts.iter()
                      .map(|part| {
-                         let path = &format!("./src/bin/textures/{}/{}.jpg", texture_src, part);
+                         let path = &format!("./assets/textures/{}/{}.jpg", texture_src, part);
                          let im = image::load(Cursor::new(slurp_bytes(path)), image::JPEG)
                                       .expect("Failed to load a texture")
                                       .to_rgba();
