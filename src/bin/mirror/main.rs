@@ -72,12 +72,6 @@ impl Painter for Matisse {
     }
 }
 
-impl Matisse {
-    fn projection<S: Surface>(&self, api: &mut Api<S>) -> Mat4 {
-        perspective(deg(45.0), api.aspect_ratio, 0.1, 100.0)
-    }
-}
-
 struct SkyBox {
     vertex_buffer: VertexBuffer<Vertex>,
     program: Program,
@@ -100,7 +94,7 @@ impl SkyBox {
                         -> std::result::Result<(), DrawError> {
         let uniforms = uniform! {
             view: p.camera.view(),
-            projection: p.projection(api),
+            projection: api.projection(),
             skybox: &self.cubemap,
         };
 
@@ -142,7 +136,7 @@ impl Cube {
         let uniforms = uniform! {
             model: id().scale(5.0),
             view: p.camera.view(),
-            projection: p.projection(api),
+            projection: api.projection(),
             camera_position: p.camera.position(),
             skybox: &p.skybox.cubemap,
         };

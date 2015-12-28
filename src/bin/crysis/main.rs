@@ -67,7 +67,7 @@ impl Painter for Bacon {
         let uniforms = uniform! {
             model: id().scale(0.1),
             view: self.camera.view(),
-            projection: perspective(deg(45.0), api.aspect_ratio, 0.1, 100.0),
+            projection: api.projection(),
         };
         self.suite.draw(api, &self.program, &uniforms)
     }

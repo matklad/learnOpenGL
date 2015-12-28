@@ -3,7 +3,7 @@ use std::error::Error;
 use glium::{Surface, DrawError, DrawParameters};
 use glium::glutin::Event;
 use glium::backend::glutin_backend::GlutinFacade;
-
+use math::*;
 
 
 pub trait Painter: Sized {
@@ -20,4 +20,10 @@ pub struct Api<'a, S: Surface + 'a> {
     pub aspect_ratio: f32,
     pub time: f32,
     pub default_params: DrawParameters<'static>,
+}
+
+impl<'a, S: Surface> Api<'a, S> {
+    pub fn projection(&self) -> Mat4 {
+        perspective(deg(45.0), self.aspect_ratio, 0.1, 100.0)
+    }
 }
