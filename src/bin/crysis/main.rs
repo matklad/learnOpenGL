@@ -54,20 +54,20 @@ impl Painter for Bacon {
         })
     }
 
-    fn clear_color() -> (f32, f32, f32) {
-        (0.4, 0.4, 0.1)
-    }
-
     fn process_event(&mut self, event: Event, delta_seconds: f32) {
-        println!("{}", delta_seconds);
         self.camera.process_event(event, delta_seconds)
     }
 
     fn draw<S: Surface>(&self, api: &mut Api<S>) -> std::result::Result<(), DrawError> {
+        let radius = 8.0;
+        let light_position = [api.time.sin() * radius,
+                              2.0 * api.time.sin(),
+                              api.time.cos() * radius];
         let uniforms = uniform! {
             model: id().scale(0.1),
             view: self.camera.view(),
             projection: api.projection(),
+            light: light_position,
         };
         self.suite.draw(api, &self.program, &uniforms)
     }
