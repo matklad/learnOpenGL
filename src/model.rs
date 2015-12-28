@@ -1,13 +1,36 @@
 #![allow(unused_variables)]
 
-use std::error::Error;
-use wavefront_obj::obj::{self, Object, Shape};
-
-use glium::index::{PrimitiveType, IndexBuffer};
-use glium::{Surface, DrawError, VertexBuffer, Program};
-use glium::uniforms::Uniforms;
 use glium::backend::glutin_backend::GlutinFacade;
+use glium::index::{PrimitiveType, IndexBuffer};
+use glium::uniforms::Uniforms;
+use glium::vertex::BufferCreationError as VertexBufferCreationError;
+use glium::index::BufferCreationError as IndexBufferCreationError;
+use glium::{Surface, DrawError, VertexBuffer, Program};
+
+use wavefront_obj::obj::{self, Object, Shape};
+use wavefront_obj::ParseError;
+
 use {assets, Api};
+
+quick_error! {
+    #[derive(Debug)]
+    pub enum ModelLoadingError {
+        AssetError(err: assets::AssetLoadingError) {
+            from()
+            cause(err)
+        }
+        VertexBufferCreationError(err: VertexBufferCreationError) {
+            from()
+            cause(err)
+        }
+        IndexBufferCreationError(err: IndexBufferCreationError) {
+            from()
+        }
+        ParseError(err: ParseError) {
+            from()
+        }
+    }
+}
 
 #[derive(Debug)]
 pub struct Model {
@@ -15,25 +38,23 @@ pub struct Model {
 }
 
 impl Model {
-    pub fn load(facade: &GlutinFacade, path: &str) -> Result<Model, Box<Error>> {
-        use wavefront_obj::obj;
-
-        let objset = obj::parse(try!(assets::slurp(&format!("./assets/models/{}", path))))
-                         .expect("Failed to parse an obj model");
+    pub fn load(facade: &GlutinFacade, path: &str) -> Result<Model, ModelLoadingError> {
+        let bytes = try!(assets::slurp(&format!("./assets/models/{}", path)));
+        let objset = try!(obj::parse(bytes));
 
         let meshes = try!(objset.objects
                                 .into_iter()
                                 .map(|o| Mesh::from_obj(facade, o))
-                                .collect::<Result<Vec<_>, Box<Error>>>());
+                                .collect::<Result<Vec<_>, _>>());
 
         Ok(Model { meshes: meshes })
     }
 
     pub fn draw<S: Surface, U: Uniforms>(&self,
-                            api: &mut Api<S>,
-                            program: &Program,
-                            uniforms: &U)
-                            -> Result<(), DrawError> {
+                                         api: &mut Api<S>,
+                                         program: &Program,
+                                         uniforms: &U)
+                                         -> Result<(), DrawError> {
         for m in &self.meshes {
             try!(m.draw(api, program, uniforms))
         }
@@ -48,7 +69,7 @@ struct Mesh {
 }
 
 impl Mesh {
-    fn from_obj(facade: &GlutinFacade, obj: Object) -> Result<Mesh, Box<Error>> {
+    fn from_obj(facade: &GlutinFacade, obj: Object) -> Result<Mesh, ModelLoadingError> {
         let vertices = obj.vertices
                           .into_iter()
                           .map(Vertex::from)
@@ -68,8 +89,7 @@ impl Mesh {
 
         Ok(Mesh {
             vertex_buffer: try!(VertexBuffer::new(facade, &vertices)),
-            index_buffer: IndexBuffer::new(facade, PrimitiveType::TrianglesList, &indices)
-                              .expect("Failed to create an index buffer"),
+            index_buffer: try!(IndexBuffer::new(facade, PrimitiveType::TrianglesList, &indices)),
         })
     }
 }
