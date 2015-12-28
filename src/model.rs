@@ -18,7 +18,7 @@ impl Model {
     pub fn load(facade: &GlutinFacade, path: &str) -> Result<Model, Box<Error>> {
         use wavefront_obj::obj;
 
-        let objset = obj::parse(assets::slurp(&format!("./assets/models/{}", path)))
+        let objset = obj::parse(try!(assets::slurp(&format!("./assets/models/{}", path))))
                          .expect("Failed to parse an obj model");
 
         let meshes = try!(objset.objects

@@ -84,7 +84,7 @@ impl SkyBox {
         Ok(SkyBox {
             vertex_buffer: try!(VertexBuffer::new(facade, &shape)),
             program: try!(load_program(facade, "skybox/vertex.glsl", "skybox/fragment.glsl")),
-            cubemap: load_cubemap(facade, "skybox"),
+            cubemap: try!(load_cubemap(facade, "skybox")),
         })
     }
 
@@ -118,7 +118,7 @@ struct Cube {
 
 impl Cube {
     fn new(facade: &GlutinFacade) -> Result<Cube, Box<Error>> {
-        let model = load_obj("bunny_with_normals.obj");
+        let model = try!(load_obj("bunny_with_normals.obj"));
         let shape = VertexNormal::from_obj(&model);
         Ok(Cube {
             vertex_buffer: try!(VertexBuffer::new(facade, &shape)),
