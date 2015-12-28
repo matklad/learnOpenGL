@@ -17,4 +17,4 @@ features = ["glutin"]
 
 [[bin]]
 name = "mirror"
-path = "src/bin/mirror.rs"
+path = "src/bin/mirror/main.rs"

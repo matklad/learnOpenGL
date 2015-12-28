@@ -30,23 +30,6 @@ pub struct VertexNormal {
 implement_vertex!(VertexNormal, position, normal);
 
 impl VertexNormal {
-    pub fn many(verts: Vec<f32>) -> Vec<VertexNormal> {
-        let m = 6;
-        if verts.len() % m != 0 {
-            panic!("Number of coordinates should be divisible by {}, but it was {}",
-                   m,
-                   verts.len())
-        }
-        verts.chunks(m)
-             .map(|p| {
-                 VertexNormal {
-                     position: [p[0], p[1], p[2]],
-                     normal: [p[3], p[4], p[5]],
-                 }
-             })
-             .collect()
-    }
-
     pub fn from_obj(obj: &Obj) -> Vec<VertexNormal> {
         obj.vertices
            .iter()
