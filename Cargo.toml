@@ -10,6 +10,7 @@ gl = "0.5"
 image = "0.6"
 log = "0.3"
 time = "0.1"
+wavefront_obj = "2"
 
 [dependencies.glium]
 version = "0.13"
@@ -18,3 +19,7 @@ features = ["glutin"]
 [[bin]]
 name = "mirror"
 path = "src/bin/mirror/main.rs"
+
+[[bin]]
+name = "crysis"
+path = "src/bin/crysis/main.rs"

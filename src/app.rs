@@ -49,7 +49,8 @@ impl<P: Painter> App<P> {
         let mut target = self.facade.draw();
         let (width, height) = target.get_dimensions();
         let aspect_ratio = width as f32 / height as f32;
-        target.clear_color_and_depth((0.0, 0.0, 0.0, 1.0), 1.0);
+        let (r, g, b) = P::clear_color();
+        target.clear_color_and_depth((r, g, b, 1.0), 1.0);
         {
             let mut api = Api {
                 surface: &mut target,

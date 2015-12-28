@@ -111,7 +111,7 @@ unsafe fn cubemap_id(faces: Vec<RawImage>, size: u32) -> u32 {
     result
 }
 
-fn slurp(path: &str) -> String {
+pub fn slurp(path: &str) -> String {
     let mut file = File::open(path).expect(&format!("Failed to open assets file: {}", path));
     let mut data = String::new();
     file.read_to_string(&mut data).expect(&format!("Failed to read assets file: {}", path));
