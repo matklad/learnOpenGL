@@ -89,6 +89,7 @@ fn build_display() -> Result<GlutinFacade> {
     WindowBuilder::new()
         .with_dimensions(800, 600)
         .with_depth_buffer(24)
+        .with_multisampling(4)
         .with_gl_profile(GlProfile::Core)
         .with_vsync()
         .build_glium()

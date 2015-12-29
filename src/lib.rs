@@ -1,10 +1,8 @@
 #![deny(warnings)]
-#[macro_use]
-extern crate log;
-#[macro_use]
-extern crate glium;
-#[macro_use]
-extern crate quick_error;
+#[macro_use] extern crate log;
+#[macro_use] extern crate glium;
+#[macro_use] extern crate quick_error;
+#[macro_use] extern crate itertools;
 extern crate gl;
 extern crate cgmath;
 extern crate time;

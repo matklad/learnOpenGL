@@ -4,12 +4,13 @@ use std::path::Path;
 use std::collections::HashMap;
 
 use glium::backend::glutin_backend::GlutinFacade;
-use glium::index::{PrimitiveType, NoIndices};
+use glium::index::{PrimitiveType, IndexBuffer};
 use glium::uniforms::{Uniforms, UniformValue, AsUniformValue};
 use glium::vertex::BufferCreationError as VertexBufferCreationError;
 use glium::index::BufferCreationError as IndexBufferCreationError;
 use glium::texture::Texture2d;
 use glium::{Surface, DrawError, VertexBuffer, Program};
+use itertools::Itertools;
 
 use assets::load_texture;
 use tobj::{self, Material};
@@ -91,25 +92,33 @@ impl Model {
 #[derive(Debug)]
 struct Mesh {
     vertex_buffer: VertexBuffer<Vertex>,
+    index_buffer: IndexBuffer<u32>,
     material_id: Option<usize>,
 }
 
 impl Mesh {
     fn from_obj(facade: &GlutinFacade, model: tobj::Model) -> Result<Mesh, ModelLoadingError> {
-        let mut vertices = vec![];
+
         let ref mesh = model.mesh;
-        for i in mesh.indices.iter().map(|&i| i as usize) {
-            let (a, b, c) = (i * 3, i * 3 + 1, i * 3 + 2);
+        let mut vertices = vec![];
+        let n = mesh.positions.len() / 3;
+        let get = |v: &Vec<f32>, i: usize| v.get(i).map(|&i| i).unwrap_or(0.0);
+        for i in 0..n {
             vertices.push(Vertex {
-                position: [mesh.positions[a], mesh.positions[b], mesh.positions[c]],
-                normal: [mesh.normals[a], mesh.normals[b], mesh.normals[c]],
-                texture: [mesh.texcoords[i * 2], mesh.texcoords[i * 2 + 1]],
-            });
-
+                position: [mesh.positions[3 * i],
+                           mesh.positions[3 * i + 1],
+                           mesh.positions[3 * i + 2]],
+                normal: [get(&mesh.normals, 3 * i),
+                         get(&mesh.normals, 3 * i + 1),
+                         get(&mesh.normals, 3 * i + 2)],
+                texture: [get(&mesh.texcoords, 2 * i), get(&mesh.texcoords, 2 * i + 1)],
+            })
         }
-
         Ok(Mesh {
             vertex_buffer: try!(VertexBuffer::new(facade, &vertices)),
+            index_buffer: try!(IndexBuffer::new(facade,
+                                                PrimitiveType::TrianglesList,
+                                                &mesh.indices)),
             material_id: model.mesh.material_id,
         })
     }
@@ -121,9 +130,8 @@ impl Mesh {
                                          texture: &Texture2d)
                                          -> Result<(), DrawError> {
 
-
         api.surface.draw(&self.vertex_buffer,
-                         &NoIndices(PrimitiveType::TrianglesList),
+                         &self.index_buffer,
                          program,
                          &MyUniform {
                              material: material,
