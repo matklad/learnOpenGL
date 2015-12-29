@@ -9,9 +9,9 @@ env_logger = "0.3"
 gl = "0.5"
 image = "0.6"
 log = "0.3"
-time = "0.1"
 quick-error = "0.2"
-wavefront_obj = "2"
+time = "0.1"
+tobj = "0.1"
 
 [dependencies.glium]
 version = "0.13"

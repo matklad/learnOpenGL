@@ -2,6 +2,7 @@ use std;
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::Cursor;
+use std::path::Path;
 
 use glium::{Program, ProgramCreationError};
 use glium::backend::Facade;
@@ -137,20 +138,30 @@ unsafe fn cubemap_id(faces: Vec<RawImage>, size: u32) -> u32 {
     result
 }
 
-pub fn slurp(path: &str) -> Result<String> {
-    let mut file = try!(File::open(path)
-                            .map_err(|e| AssetLoadingError::IoError(path.to_owned(), e)));
+pub fn slurp<P: AsRef<Path>>(path: P) -> Result<String> {
+    let name: String = path.as_ref().display().to_string();
+    let mut file = try!(File::open(path).map_err(|e| AssetLoadingError::IoError(name.clone(), e)));
     let mut data = String::new();
     try!(file.read_to_string(&mut data)
-             .map_err(|e| AssetLoadingError::IoError(path.to_owned(), e)));
+             .map_err(|e| AssetLoadingError::IoError(name.clone(), e)));
     Ok(data)
 }
 
 
-fn slurp_bytes(path: &str) -> Result<Vec<u8>> {
+fn slurp_bytes<P: AsRef<Path>>(path: P) -> Result<Vec<u8>> {
+    let name = path.as_ref().display().to_string();
     let mut file = try!(File::open(path)
-                            .map_err(|e| AssetLoadingError::IoError(path.to_owned(), e)));
+                            .map_err(|e| AssetLoadingError::IoError(name.clone(), e)));
     let mut data = vec![];
-    try!(file.read_to_end(&mut data).map_err(|e| AssetLoadingError::IoError(path.to_owned(), e)));
+    try!(file.read_to_end(&mut data).map_err(|e| AssetLoadingError::IoError(name.clone(), e)));
     Ok(data)
+}
+
+pub fn load_texture<P: AsRef<Path>>(path: P) -> RawImage2d<'static, u8> {
+    let bytes = slurp_bytes(path).expect("Failed to load a texture");
+    let im = image::load(Cursor::new(bytes), image::PNG)
+                 .expect("Failed to load a texture")
+                 .to_rgba();
+    let dim = im.dimensions();
+    RawImage2d::from_raw_rgba_reversed(im.into_raw(), dim)
 }

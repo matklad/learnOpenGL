@@ -7,9 +7,11 @@ uniform vec3 light;
 
 in vec3 position;
 in vec3 normal;
+in vec2 texture;
 
 out vec3 model_position;
 out vec3 model_normal;
+out vec2 model_texture;
 out vec3 light_position;
 
 
@@ -19,5 +21,6 @@ void main() {
     gl_Position = projection * view_model * hpos;
     model_position = vec3(view_model * hpos);
     model_normal = mat3(transpose(inverse(view_model))) * normal;
+    model_texture = texture;
     light_position = vec3(view * vec4(light, 1.0));
 }
