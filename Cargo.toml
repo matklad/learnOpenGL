@@ -25,3 +25,7 @@ path = "src/bin/mirror/main.rs"
 [[bin]]
 name = "crysis"
 path = "src/bin/crysis/main.rs"
+
+[[bin]]
+name = "spot"
+path = "src/bin/spot/main.rs"
