@@ -1,3 +1,5 @@
+use std::ops::Mul;
+
 use cgmath::{Basis3, Rotation3, Matrix4, Vector3};
 
 use cgmath::{self, Rad, Point3, Point};
@@ -52,6 +54,14 @@ impl Mat4 {
 
     pub fn translate(&self, direction: Vec3) -> Mat4 {
         Mat4(self.0 * Matrix4::from_translation(direction))
+    }
+}
+
+impl Mul<Mat4> for Mat4 {
+    type Output = Mat4;
+
+    fn mul(self, other: Mat4) -> Mat4 {
+        Mat4(self.0 * other.0)
     }
 }
 

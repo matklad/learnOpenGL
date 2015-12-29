@@ -1,6 +1,6 @@
 use glium::glutin::{Event, ElementState, VirtualKeyCode};
 use cgmath::{Point3, Point, Matrix4, Vector, Vector2, EuclideanVector, vec2, vec3, Deg, Angle,
-             Quaternion};
+             Quaternion, zero, Rotation3, Rad};
 
 use math::{look_at, Vec3, Mat4};
 
@@ -34,6 +34,10 @@ impl Camera {
 
     pub fn view(&self) -> Mat4 {
         Mat4(Matrix4::look_at(self.eye, self.eye + self.front(), self.up))
+    }
+
+    pub fn rotation(&self) -> Mat4 {
+        Mat4(Matrix4::from(Quaternion::from_euler(self.pitch.into(), self.yaw.into(), Rad::zero())))
     }
 
     pub fn position(&self) -> Vec3 {

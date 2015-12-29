@@ -105,7 +105,7 @@ impl Projector {
 
     fn draw<S: Surface>(&self, api: &mut Api<S>, p: &Bacon) -> std::result::Result<(), DrawError> {
         let uniforms = uniform! {
-            model: id().translate(self.camera.position()).scale(0.5),
+            model: id().translate(self.camera.position()).scale(0.5) * self.camera.rotation(),
             view: p.view(),
             projection: api.projection(),
         };
