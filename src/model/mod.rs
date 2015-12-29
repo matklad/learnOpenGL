@@ -74,7 +74,7 @@ impl Model {
                                          -> Result<(), DrawError> {
         for m in &self.meshes {
             let material = m.material_id.map(|i| &self.materials[i]);
-            let ref tex = self.textures[&material.unwrap().diffuse_texture];
+            let tex = material.map(|m| &self.textures[&m.diffuse_texture]);
             try!(m.draw(api, program, uniforms, material, tex))
         }
         Ok(())

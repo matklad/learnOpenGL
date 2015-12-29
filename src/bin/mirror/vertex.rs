@@ -1,5 +1,3 @@
-use lights::Obj;
-
 #[derive(Copy, Clone)]
 pub struct Vertex {
     position: [f32; 3],
@@ -21,25 +19,3 @@ impl Vertex {
     }
 }
 
-#[derive(Clone, Copy)]
-pub struct VertexNormal {
-    position: [f32; 3],
-    normal: [f32; 3],
-}
-
-implement_vertex!(VertexNormal, position, normal);
-
-impl VertexNormal {
-    pub fn from_obj(obj: &Obj) -> Vec<VertexNormal> {
-        obj.vertices
-           .iter()
-           .zip(obj.normals.iter())
-           .map(|(p, n)| {
-               VertexNormal {
-                   position: *p,
-                   normal: *n,
-               }
-           })
-           .collect()
-    }
-}

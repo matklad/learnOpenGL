@@ -11,18 +11,18 @@ use std::io::prelude::*;
 
 use env_logger::LogBuilder;
 use glium::backend::glutin_backend::GlutinFacade;
-use glium::index::{NoIndices, PrimitiveType, IndexBuffer};
+use glium::index::{NoIndices, PrimitiveType};
 use glium::{Surface, VertexBuffer, DrawError, Program, DrawParameters, Depth};
 use glium::glutin::Event;
 use glium::texture::cubemap::Cubemap;
 
-use lights::{App, Api, Painter, load_program, Camera, load_cubemap, load_obj};
+use lights::{App, Api, Painter, load_program, Camera, load_cubemap, Model};
 use lights::math::*;
 
 mod vertex;
 mod models;
 
-use vertex::{Vertex, VertexNormal};
+use vertex::{Vertex};
 
 fn init_log() {
     LogBuilder::new()
@@ -48,7 +48,9 @@ fn run() -> Result<(), Box<std::error::Error>> {
 struct Matisse {
     camera: Camera,
     skybox: SkyBox,
-    cube: Cube,
+    bunny: Model,
+    cube: Model,
+    program: Program,
 }
 
 impl Painter for Matisse {
@@ -57,7 +59,9 @@ impl Painter for Matisse {
         Ok(Matisse {
             camera: Camera::new(vec3(0.0, 0.0, 3.0), vec3(0.0, 0.0, 0.0), Y),
             skybox: try!(SkyBox::new(facade)),
-            cube: try!(Cube::new(facade)),
+            bunny: try!(Model::load(facade, "bunny_with_normals.obj")),
+            cube: try!(Model::load(facade, "cube.obj")),
+            program: try!(load_program(facade, "mirror/vertex.glsl", "mirror/fragment.glsl")),
         })
     }
 
@@ -67,7 +71,24 @@ impl Painter for Matisse {
 
     fn draw<S: Surface>(&self, api: &mut Api<S>) -> std::result::Result<(), DrawError> {
         try!(self.skybox.draw(api, self));
-        try!(self.cube.draw(api, self));
+        let uniforms = uniform! {
+            model: id().scale(5.0),
+            view: self.camera.view(),
+            projection: api.projection(),
+            camera_position: self.camera.position(),
+            skybox: &self.skybox.cubemap,
+        };
+        try!(self.bunny.draw(api, &self.program, &uniforms));
+
+        let uniforms = uniform! {
+            model: id().translate(vec3(0.0, -0.3, 0.0)),
+            view: self.camera.view(),
+            projection: api.projection(),
+            camera_position: self.camera.position(),
+            skybox: &self.skybox.cubemap,
+        };
+        try!(self.cube.draw(api, &self.program, &uniforms));
+
         Ok(())
     }
 }
@@ -106,46 +127,6 @@ impl SkyBox {
                                   depth: Depth { write: false, ..Default::default() },
                                   ..api.default_params.clone()
                               }));
-        Ok(())
-    }
-}
-
-struct Cube {
-    vertex_buffer: VertexBuffer<VertexNormal>,
-    index_buffer: IndexBuffer<u16>,
-    program: Program,
-}
-
-impl Cube {
-    fn new(facade: &GlutinFacade) -> Result<Cube, Box<Error>> {
-        let model = try!(load_obj("bunny_with_normals.obj"));
-        let shape = VertexNormal::from_obj(&model);
-        Ok(Cube {
-            vertex_buffer: try!(VertexBuffer::new(facade, &shape)),
-            index_buffer: IndexBuffer::new(facade, PrimitiveType::TrianglesList, &model.indices)
-                              .expect("Failed to crate an index buffer"),
-
-            program: try!(load_program(facade, "cube/vertex.glsl", "cube/fragment.glsl")),
-        })
-    }
-
-    fn draw<S: Surface>(&self,
-                        api: &mut Api<S>,
-                        p: &Matisse)
-                        -> std::result::Result<(), DrawError> {
-        let uniforms = uniform! {
-            model: id().scale(5.0),
-            view: p.camera.view(),
-            projection: api.projection(),
-            camera_position: p.camera.position(),
-            skybox: &p.skybox.cubemap,
-        };
-
-        try!(api.surface.draw(&self.vertex_buffer,
-                              &self.index_buffer,
-                              &self.program,
-                              &uniforms,
-                              &api.default_params));
         Ok(())
     }
 }

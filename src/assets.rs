@@ -13,8 +13,6 @@ use gl;
 
 use image;
 
-use {obj, Obj};
-
 type RawImage = RawImage2d<'static, u8>;
 
 quick_error! {
@@ -25,9 +23,6 @@ quick_error! {
             display("Failed to read {}", path)
         }
         ImageError(err: image::ImageError) {
-            from()
-        }
-        ObjError(err: obj::ObjError) {
             from()
         }
         ShaderCreationError(err: ProgramCreationError) {
@@ -47,11 +42,6 @@ pub fn load_program(facade: &GlutinFacade,
     let vertex_shader = try!(slurp(&format!("./assets/shaders/{}", vertex_shader_path)));
     let fragment_shader = try!(slurp(&format!("./assets/shaders/{}", fragment_shader_path)));
     Ok(try!(Program::from_source(facade, &vertex_shader, &fragment_shader, None)))
-}
-
-pub fn load_obj(obj_file: &str) -> Result<Obj> {
-    let data = try!(slurp(&format!("./assets/models/{}", obj_file)));
-    Ok(try!(obj::parse(&data)))
 }
 
 fn load_cubemap_faces(texture_src: &str) -> Result<(u32, Vec<RawImage>)> {

@@ -46,7 +46,7 @@ impl Mesh {
                                          program: &Program,
                                          uniforms: &U,
                                          material: Option<&tobj::Material>,
-                                         texture: &Texture2d)
+                                         texture: Option<&Texture2d>)
                                          -> Result<(), DrawError> {
 
         api.surface.draw(&self.vertex_buffer,
@@ -72,7 +72,7 @@ implement_vertex!(Vertex, position, normal, texture);
 
 struct MyUniform<'a, U: Uniforms + 'a> {
     material: Option<&'a tobj::Material>,
-    texture: &'a Texture2d,
+    texture: Option<&'a Texture2d>,
     u: &'a U,
 }
 
@@ -80,9 +80,11 @@ impl<'a, U: Uniforms> Uniforms for MyUniform<'a, U> {
     fn visit_values<'c, F: FnMut(&str, UniformValue<'c>)>(&'c self, mut f: F) {
         if let Some(material) = self.material {
             f("color_diffuse", material.diffuse.as_uniform_value());
-            f("texture_diffuse", self.texture.as_uniform_value());
             f("color_specular", material.specular.as_uniform_value());
             f("shininess", material.shininess.as_uniform_value());
+        }
+        if let Some(ref tex) = self.texture {
+            f("texture_diffuse", tex.as_uniform_value());
         }
         self.u.visit_values(f);
     }

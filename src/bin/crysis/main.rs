@@ -45,11 +45,11 @@ struct Bacon {
 
 impl Painter for Bacon {
     fn new(facade: &GlutinFacade) -> Result<Bacon, Box<Error>> {
-        let suite = try!(Model::load(facade, "nanosuite/nanosuit.obj"));
+        let suite = try!(Model::load(facade, "nanosuit/nanosuit.obj"));
 
         Ok(Bacon {
             camera: Camera::new(vec3(0.0, 1.0, 3.0), vec3(0.0, 1.0, 0.0), Y),
-            program: try!(load_program(facade, "suite/vertex.glsl", "suite/fragment.glsl")),
+            program: try!(load_program(facade, "suit/vertex.glsl", "suit/fragment.glsl")),
             suite: suite,
         })
     }
