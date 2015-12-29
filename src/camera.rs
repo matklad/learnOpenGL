@@ -36,7 +36,11 @@ impl Camera {
         Mat4(Matrix4::look_at(self.eye, self.eye + self.front(), self.up))
     }
 
-    pub fn position(&self) -> [f32; 3] {
+    pub fn position(&self) -> Vec3 {
+        self.eye.to_vec()
+    }
+
+    pub fn position_unif(&self) -> [f32; 3] {
         self.eye.into()
     }
 
@@ -49,7 +53,6 @@ impl Camera {
              self.pitch.sin(),
              self.yaw.sin() * self.pitch.cos())
     }
-
 
 
     pub fn process_event(&mut self, event: Event, delta_t: f32) {

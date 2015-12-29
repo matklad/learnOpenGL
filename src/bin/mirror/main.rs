@@ -75,7 +75,7 @@ impl Painter for Matisse {
             model: id().scale(5.0),
             view: self.camera.view(),
             projection: api.projection(),
-            camera_position: self.camera.position(),
+            camera_position: self.camera.position_unif(),
             skybox: &self.skybox.cubemap,
         };
         try!(self.bunny.draw(api, &self.program, &uniforms));
@@ -84,7 +84,7 @@ impl Painter for Matisse {
             model: id().translate(vec3(0.0, -0.3, 0.0)),
             view: self.camera.view(),
             projection: api.projection(),
-            camera_position: self.camera.position(),
+            camera_position: self.camera.position_unif(),
             skybox: &self.skybox.cubemap,
         };
         try!(self.cube.draw(api, &self.program, &uniforms));

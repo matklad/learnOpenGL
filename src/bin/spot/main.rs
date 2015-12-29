@@ -16,7 +16,7 @@ use glium::index::{NoIndices, PrimitiveType};
 use glium::backend::glutin_backend::GlutinFacade;
 use glium::glutin::Event;
 
-use lights::{App, Painter, Api, Model, load_program};
+use lights::{App, Painter, Api, Model, Camera, load_program};
 use lights::math::*;
 
 mod models;
@@ -78,9 +78,15 @@ impl Painter for Bacon {
         try!(self.suite.draw(api, &self.program, &uniforms));
         self.projector.draw(api, self)
     }
+
+
+    fn process_event(&mut self, event: Event, delta_t: f32) {
+        self.projector.process_event(event, delta_t);
+    }
 }
 
 struct Projector {
+    camera: Camera,
     vertex_buffer: VertexBuffer<vertex::Vertex>,
     program: Program,
 }
@@ -91,6 +97,7 @@ impl Projector {
         let program = try!(load_program(facade, "proj/vertex.glsl", "proj/fragment.glsl"));
 
         Ok(Projector {
+            camera: Camera::new(vec3(0.0, 2.0, 0.0), vec3(0.0, 0.0, 0.0), Y),
             vertex_buffer: vertex_buffer,
             program: program,
         })
@@ -98,7 +105,7 @@ impl Projector {
 
     fn draw<S: Surface>(&self, api: &mut Api<S>, p: &Bacon) -> std::result::Result<(), DrawError> {
         let uniforms = uniform! {
-            model: id().translate(vec3(0.0, 2.0, 0.0)).scale(0.5),
+            model: id().translate(self.camera.position()).scale(0.5),
             view: p.view(),
             projection: api.projection(),
         };
@@ -107,5 +114,9 @@ impl Projector {
                          &self.program,
                          &uniforms,
                          &api.default_params)
+    }
+
+    pub fn process_event(&mut self, event: Event, delta_t: f32) {
+        self.camera.process_event(event, delta_t);
     }
 }
