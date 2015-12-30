@@ -5,15 +5,14 @@ extern crate glium;
 extern crate env_logger;
 extern crate lights;
 
-use std::error::Error;
 use std::io::prelude::*;
 
 use env_logger::LogBuilder;
-use glium::{DrawError, Surface, Program};
+use glium::{Surface, Program};
 use glium::backend::glutin_backend::GlutinFacade;
 use glium::glutin::Event;
 
-use lights::{App, Painter, Api, Camera, Model, load_program};
+use lights::{App, Painter, Api, Camera, Model, load_program, Result};
 use lights::math::*;
 
 fn init_log() {
@@ -27,11 +26,13 @@ fn init_log() {
 fn main() {
     if let Err(e) = run() {
         writeln!(std::io::stderr(), "{}\n=(", e).unwrap();
-        writeln!(std::io::stderr(), "\nGuru meditation {:#?}", e).unwrap();
+        if let Some(info) = e.guru_info() {
+            writeln!(std::io::stderr(), "\nGuru meditation:\n{}", info).unwrap();
+        }
     }
 }
 
-fn run() -> Result<(), Box<std::error::Error>> {
+fn run() -> Result<()> {
     init_log();
     try!(App::<Bacon>::run());
     Ok(())
@@ -44,7 +45,7 @@ struct Bacon {
 }
 
 impl Painter for Bacon {
-    fn new(facade: &GlutinFacade) -> Result<Bacon, Box<Error>> {
+    fn new(facade: &GlutinFacade) -> Result<Bacon> {
         let suite = try!(Model::load(facade, "nanosuit/nanosuit.obj"));
 
         Ok(Bacon {
@@ -58,7 +59,7 @@ impl Painter for Bacon {
         self.camera.process_event(event, delta_seconds)
     }
 
-    fn draw<S: Surface>(&self, api: &mut Api<S>) -> std::result::Result<(), DrawError> {
+    fn draw<S: Surface>(&self, api: &mut Api<S>) -> Result<()> {
         let radius = 8.0;
         let light_position = [api.time.sin() * radius,
                               2.0 * api.time.sin(),

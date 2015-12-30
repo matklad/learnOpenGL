@@ -5,37 +5,34 @@ use std::collections::HashMap;
 
 use glium::backend::glutin_backend::GlutinFacade;
 use glium::uniforms::Uniforms;
-use glium::vertex::BufferCreationError as VertexBufferCreationError;
-use glium::index::BufferCreationError as IndexBufferCreationError;
 use glium::texture::Texture2d;
-use glium::{Surface, DrawError, Program};
+use glium::{Surface, Program};
 use itertools::Itertools;
 
 use assets::load_texture;
 use tobj::{self, Material};
 
-use Api;
+use {Api, Result};
 
 mod mesh;
 
 use self::mesh::Mesh;
 
-
-quick_error! {
-    #[derive(Debug)]
-    pub enum ModelLoadingError {
-        VertexBufferCreationError(err: VertexBufferCreationError) {
-            from()
-            cause(err)
-        }
-        IndexBufferCreationError(err: IndexBufferCreationError) {
-            from()
-        }
-        LoadError(err: tobj::LoadError) {
-            from()
-        }
-    }
-}
+// quick_error! {
+//    #[derive(Debug)]
+//    pub enum ModelLoadingError {
+//        VertexBufferCreationError(err: VertexBufferCreationError) {
+//            from()
+//            cause(err)
+//        }
+//        IndexBufferCreationError(err: IndexBufferCreationError) {
+//            from()
+//        }
+//        LoadError(err: tobj::LoadError) {
+//            from()
+//        }
+//    }
+// }
 
 type Textures = HashMap<String, Texture2d>;
 
@@ -48,9 +45,7 @@ pub struct Model {
 }
 
 impl Model {
-    pub fn load<P: AsRef<Path>>(facade: &GlutinFacade,
-                                path: P)
-                                -> Result<Model, ModelLoadingError> {
+    pub fn load<P: AsRef<Path>>(facade: &GlutinFacade, path: P) -> Result<Model> {
         let models_path = Path::new("./assets/models/");
         let model_path = models_path.join(path);
         let base = model_path.parent().expect("Invalid model path");
@@ -58,7 +53,7 @@ impl Model {
         let (models, materials) = try!(tobj::load_obj(&model_path));
         let meshes = try!(models.into_iter()
                                 .map(|m| Mesh::from_obj(facade, m))
-                                .collect::<Result<Vec<_>, _>>());
+                                .collect::<Result<Vec<_>>>());
         let textures = load_textures(facade, &base, &materials);
         Ok(Model {
             meshes: meshes,
@@ -71,7 +66,7 @@ impl Model {
                                          api: &mut Api<S>,
                                          program: &Program,
                                          uniforms: &U)
-                                         -> Result<(), DrawError> {
+                                         -> Result<()> {
         for m in &self.meshes {
             let material = m.material_id.map(|i| &self.materials[i]);
             let tex = material.map(|m| &self.textures[&m.diffuse_texture]);

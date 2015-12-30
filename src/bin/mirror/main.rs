@@ -6,17 +6,16 @@ extern crate glium;
 extern crate env_logger;
 extern crate lights;
 
-use std::error::Error;
 use std::io::prelude::*;
 
 use env_logger::LogBuilder;
 use glium::backend::glutin_backend::GlutinFacade;
 use glium::index::{NoIndices, PrimitiveType};
-use glium::{Surface, VertexBuffer, DrawError, Program, DrawParameters, Depth};
+use glium::{Surface, VertexBuffer, Program, DrawParameters, Depth};
 use glium::glutin::Event;
 use glium::texture::cubemap::Cubemap;
 
-use lights::{App, Api, Painter, load_program, Camera, load_cubemap, Model};
+use lights::{App, Api, Painter, load_program, Camera, load_cubemap, Model, Result};
 use lights::math::*;
 
 mod vertex;
@@ -35,11 +34,13 @@ fn init_log() {
 fn main() {
     if let Err(e) = run() {
         writeln!(std::io::stderr(), "{}\n=(", e).unwrap();
-        writeln!(std::io::stderr(), "\nGuru meditation {:#?}", e).unwrap();
+        if let Some(info) = e.guru_info() {
+            writeln!(std::io::stderr(), "\nGuru meditation:\n{}", info).unwrap();
+        }
     }
 }
 
-fn run() -> Result<(), Box<std::error::Error>> {
+fn run() -> Result<()> {
     init_log();
     try!(App::<Matisse>::run());
     Ok(())
@@ -54,7 +55,7 @@ struct Matisse {
 }
 
 impl Painter for Matisse {
-    fn new(facade: &GlutinFacade) -> Result<Matisse, Box<Error>> {
+    fn new(facade: &GlutinFacade) -> Result<Matisse> {
 
         Ok(Matisse {
             camera: Camera::new(vec3(0.0, 0.0, 3.0), vec3(0.0, 0.0, 0.0), Y),
@@ -69,7 +70,7 @@ impl Painter for Matisse {
         self.camera.process_event(event, delta)
     }
 
-    fn draw<S: Surface>(&self, api: &mut Api<S>) -> std::result::Result<(), DrawError> {
+    fn draw<S: Surface>(&self, api: &mut Api<S>) -> Result<()> {
         try!(self.skybox.draw(api, self));
         let uniforms = uniform! {
             model: id().scale(5.0),
@@ -100,7 +101,7 @@ struct SkyBox {
 }
 
 impl SkyBox {
-    fn new(facade: &GlutinFacade) -> Result<SkyBox, Box<Error>> {
+    fn new(facade: &GlutinFacade) -> Result<SkyBox> {
         let shape = Vertex::many(models::skybox());
         Ok(SkyBox {
             vertex_buffer: try!(VertexBuffer::new(facade, &shape)),
@@ -112,7 +113,7 @@ impl SkyBox {
     fn draw<S: Surface>(&self,
                         api: &mut Api<S>,
                         p: &Matisse)
-                        -> std::result::Result<(), DrawError> {
+                        -> Result<()> {
         let uniforms = uniform! {
             view: p.camera.view(),
             projection: api.projection(),

@@ -6,17 +6,16 @@ extern crate env_logger;
 extern crate lights;
 extern crate cgmath;
 
-use std::error::Error;
 use std::io::prelude::*;
 
 use env_logger::LogBuilder;
 use cgmath::{Matrix4, Point3};
-use glium::{DrawError, Surface, Program, VertexBuffer};
+use glium::{Surface, Program, VertexBuffer};
 use glium::index::{NoIndices, PrimitiveType};
 use glium::backend::glutin_backend::GlutinFacade;
 use glium::glutin::Event;
 
-use lights::{App, Painter, Api, Model, Camera, load_program};
+use lights::{App, Painter, Api, Model, Camera, load_program, Result};
 use lights::math::*;
 
 mod models;
@@ -33,11 +32,13 @@ fn init_log() {
 fn main() {
     if let Err(e) = run() {
         writeln!(std::io::stderr(), "{}\n=(", e).unwrap();
-        writeln!(std::io::stderr(), "\nGuru meditation {:#?}", e).unwrap();
+        if let Some(info) = e.guru_info() {
+            writeln!(std::io::stderr(), "\nGuru meditation:\n{}", info).unwrap();
+        }
     }
 }
 
-fn run() -> Result<(), Box<std::error::Error>> {
+fn run() -> Result<()> {
     init_log();
     try!(App::<Bacon>::run());
     Ok(())
@@ -59,7 +60,7 @@ impl Bacon {
 }
 
 impl Painter for Bacon {
-    fn new(facade: &GlutinFacade) -> Result<Bacon, Box<Error>> {
+    fn new(facade: &GlutinFacade) -> Result<Bacon> {
         let suite = try!(Model::load(facade, "ruins/house.obj"));
         Ok(Bacon {
             projector: try!(Projector::new(facade)),
@@ -68,7 +69,7 @@ impl Painter for Bacon {
         })
     }
 
-    fn draw<S: Surface>(&self, api: &mut Api<S>) -> std::result::Result<(), DrawError> {
+    fn draw<S: Surface>(&self, api: &mut Api<S>) -> Result<()> {
         let uniforms = uniform! {
             model: id().translate(vec3(0.0, -2.0, 0.0)),
             view: self.view(),
@@ -92,7 +93,7 @@ struct Projector {
 }
 
 impl Projector {
-    fn new(facade: &GlutinFacade) -> Result<Projector, Box<Error>> {
+    fn new(facade: &GlutinFacade) -> Result<Projector> {
         let vertex_buffer = try!(VertexBuffer::new(facade, &vertex::Vertex::many(models::cube())));
         let program = try!(load_program(facade, "proj/vertex.glsl", "proj/fragment.glsl"));
 
@@ -103,17 +104,17 @@ impl Projector {
         })
     }
 
-    fn draw<S: Surface>(&self, api: &mut Api<S>, p: &Bacon) -> std::result::Result<(), DrawError> {
+    fn draw<S: Surface>(&self, api: &mut Api<S>, p: &Bacon) -> Result<()> {
         let uniforms = uniform! {
             model: id().translate(self.camera.position()).scale(0.5) * self.camera.rotation(),
             view: p.view(),
             projection: api.projection(),
         };
-        api.surface.draw(&self.vertex_buffer,
-                         &NoIndices(PrimitiveType::TrianglesList),
-                         &self.program,
-                         &uniforms,
-                         &api.default_params)
+        Ok(try!(api.surface.draw(&self.vertex_buffer,
+                                 &NoIndices(PrimitiveType::TrianglesList),
+                                 &self.program,
+                                 &uniforms,
+                                 &api.default_params)))
     }
 
     pub fn process_event(&mut self, event: Event, delta_t: f32) {

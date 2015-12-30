@@ -1,8 +1,12 @@
 #![deny(warnings)]
-#[macro_use] extern crate log;
-#[macro_use] extern crate glium;
-#[macro_use] extern crate quick_error;
-#[macro_use] extern crate itertools;
+#[macro_use]
+extern crate log;
+#[macro_use]
+extern crate glium;
+#[macro_use]
+extern crate quick_error;
+#[macro_use]
+extern crate itertools;
 extern crate gl;
 extern crate cgmath;
 extern crate time;
@@ -18,7 +22,7 @@ mod camera;
 mod model;
 pub mod math;
 
-pub use result::{AppError, Result};
+pub use result::{Oops, oops, Result};
 pub use app::App;
 pub use painter::{Painter, Api};
 pub use assets::{load_program, load_cubemap, load_texture};

@@ -1,14 +1,14 @@
-use std::error::Error;
-
-use glium::{Surface, DrawError, DrawParameters};
+use glium::{Surface, DrawParameters};
 use glium::glutin::Event;
 use glium::backend::glutin_backend::GlutinFacade;
 use math::*;
 
+use result::Result;
+
 
 pub trait Painter: Sized {
-    fn new(facade: &GlutinFacade) -> Result<Self, Box<Error>>;
-    fn draw<S: Surface>(&self, api: &mut Api<S>) -> Result<(), DrawError>;
+    fn new(facade: &GlutinFacade) -> Result<Self>;
+    fn draw<S: Surface>(&self, api: &mut Api<S>) -> Result<()>;
     fn process_event(&mut self, _event: Event, _delta_seconds: f32) {}
     fn clear_color() -> (f32, f32, f32) {
         (0.2, 0.02, 0.8)

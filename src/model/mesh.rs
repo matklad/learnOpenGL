@@ -1,12 +1,11 @@
 use glium::backend::glutin_backend::GlutinFacade;
 use glium::index::{PrimitiveType, IndexBuffer};
 use glium::uniforms::{Uniforms, UniformValue, AsUniformValue};
-use glium::{VertexBuffer, Surface, Texture2d, DrawError, Program};
-
-use Api;
-
+use glium::{VertexBuffer, Surface, Texture2d, Program};
 use tobj;
-use super::ModelLoadingError;
+
+use {Api, Result};
+
 
 #[derive(Debug)]
 pub struct Mesh {
@@ -16,7 +15,7 @@ pub struct Mesh {
 }
 
 impl Mesh {
-    pub fn from_obj(facade: &GlutinFacade, model: tobj::Model) -> Result<Mesh, ModelLoadingError> {
+    pub fn from_obj(facade: &GlutinFacade, model: tobj::Model) -> Result<Mesh> {
 
         let ref mesh = model.mesh;
         let mut vertices = vec![];
@@ -47,17 +46,17 @@ impl Mesh {
                                          uniforms: &U,
                                          material: Option<&tobj::Material>,
                                          texture: Option<&Texture2d>)
-                                         -> Result<(), DrawError> {
+                                         -> Result<()> {
 
-        api.surface.draw(&self.vertex_buffer,
-                         &self.index_buffer,
-                         program,
-                         &MyUniform {
-                             material: material,
-                             texture: texture,
-                             u: uniforms,
-                         },
-                         &api.default_params)
+        Ok(try!(api.surface.draw(&self.vertex_buffer,
+                                 &self.index_buffer,
+                                 program,
+                                 &MyUniform {
+                                     material: material,
+                                     texture: texture,
+                                     u: uniforms,
+                                 },
+                                 &api.default_params)))
     }
 }
 

@@ -1,37 +1,19 @@
-use std;
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::Cursor;
 use std::path::Path;
 
-use glium::{Program, ProgramCreationError};
+use glium::Program;
 use glium::backend::Facade;
 use glium::backend::glutin_backend::GlutinFacade;
 use glium::texture::cubemap::Cubemap;
 use glium::texture::{UncompressedFloatFormat, MipmapsOption, Dimensions, RawImage2d};
 use gl;
-
 use image;
 
+use {Result, oops};
+
 type RawImage = RawImage2d<'static, u8>;
-
-quick_error! {
-    #[derive(Debug)]
-    pub enum AssetLoadingError {
-        IoError(path: String, err: std::io::Error) {
-            cause(err)
-            display("Failed to read {}", path)
-        }
-        ImageError(err: image::ImageError) {
-            from()
-        }
-        ShaderCreationError(err: ProgramCreationError) {
-            from()
-        }
-    }
-}
-
-pub type Result<T> = std::result::Result<T, AssetLoadingError>;
 
 
 pub fn load_program(facade: &GlutinFacade,
@@ -130,20 +112,19 @@ unsafe fn cubemap_id(faces: Vec<RawImage>, size: u32) -> u32 {
 
 pub fn slurp<P: AsRef<Path>>(path: P) -> Result<String> {
     let name: String = path.as_ref().display().to_string();
-    let mut file = try!(File::open(path).map_err(|e| AssetLoadingError::IoError(name.clone(), e)));
+    let mut file = try!(File::open(path).map_err(|e| oops(format!("failed to read {}", name), e)));
     let mut data = String::new();
     try!(file.read_to_string(&mut data)
-             .map_err(|e| AssetLoadingError::IoError(name.clone(), e)));
+             .map_err(|e| oops(format!("failed to read {}", name), e)));
     Ok(data)
 }
 
 
 fn slurp_bytes<P: AsRef<Path>>(path: P) -> Result<Vec<u8>> {
     let name = path.as_ref().display().to_string();
-    let mut file = try!(File::open(path)
-                            .map_err(|e| AssetLoadingError::IoError(name.clone(), e)));
+    let mut file = try!(File::open(path).map_err(|e| oops(format!("failed to read {}", name), e)));
     let mut data = vec![];
-    try!(file.read_to_end(&mut data).map_err(|e| AssetLoadingError::IoError(name.clone(), e)));
+    try!(file.read_to_end(&mut data).map_err(|e| oops(format!("failed to read {}", name), e)));
     Ok(data)
 }
 
