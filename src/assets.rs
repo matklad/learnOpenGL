@@ -111,12 +111,10 @@ unsafe fn cubemap_id(faces: Vec<RawImage>, size: u32) -> u32 {
 }
 
 pub fn slurp<P: AsRef<Path>>(path: P) -> Result<String> {
-    let name: String = path.as_ref().display().to_string();
-    let mut file = try!(File::open(path).map_err(|e| oops(format!("failed to read {}", name), e)));
-    let mut data = String::new();
-    try!(file.read_to_string(&mut data)
-             .map_err(|e| oops(format!("failed to read {}", name), e)));
-    Ok(data)
+    let name = path.as_ref().display().to_string();
+    let bytes = try!(slurp_bytes(path));
+
+    String::from_utf8(bytes).map_err(|e| oops(format!("invalid utf-8 in {}", name), e))
 }
 
 
