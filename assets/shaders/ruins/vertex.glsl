@@ -14,6 +14,8 @@ out vec3 model_normal;
 out vec2 model_texture;
 out vec3 light_position;
 
+out vec4 model_world;
+
 
 void main() {
     mat4 view_model = view * model;
@@ -23,4 +25,6 @@ void main() {
     model_normal = mat3(transpose(inverse(view_model))) * normal;
     model_texture = texture;
     light_position = vec3(view * vec4(light, 1.0));
+
+    model_world = model * hpos;
 }

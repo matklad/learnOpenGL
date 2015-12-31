@@ -3,12 +3,19 @@
 uniform sampler2D texture_diffuse;
 uniform vec3 color_specular;
 uniform float shininess;
+uniform sampler2D awesome;
+uniform mat4 projector_view;
+uniform mat4 projection;
+
 
 
 in vec3 model_normal;
 in vec3 model_position;
 in vec2 model_texture;
 in vec3 light_position;
+
+in vec4 model_world;
+
 
 out vec4 color;
 
@@ -31,4 +38,13 @@ void main() {
 
     vec3 result = (amnbient + diffuse + specular) * light_color;
     color = vec4(result, 1.0);
+
+    vec4 h_model_projector = projection * projector_view * model_world;
+    vec3 model_projector = h_model_projector.xyz / h_model_projector.w;
+
+    if (all(lessThan(vec3(-1.0), model_projector)) && all(lessThan(model_projector, vec3(1.0)))) {
+        vec2 tex_coord = (model_projector.xy + vec2(1.0)) / 2;
+        color = 0.7 * color + 0.3 * texture(awesome, tex_coord);
+    }
+
 }

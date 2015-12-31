@@ -10,12 +10,13 @@ use std::io::prelude::*;
 
 use env_logger::LogBuilder;
 use cgmath::{Matrix4, Point3};
-use glium::{Surface, Program, VertexBuffer};
+use glium::{Surface, Program, VertexBuffer, Texture2d};
+use glium::draw_parameters::{DrawParameters, PolygonMode};
 use glium::index::{NoIndices, PrimitiveType};
 use glium::backend::glutin_backend::GlutinFacade;
 use glium::glutin::Event;
 
-use lights::{App, Painter, Api, Model, Camera, load_program, Result};
+use lights::{App, Painter, Api, Model, Camera, load_program, Result, load_texture};
 use lights::math::*;
 
 mod models;
@@ -46,7 +47,8 @@ fn run() -> Result<()> {
 
 struct Bacon {
     projector: Projector,
-    suite: Model,
+    ruins: Model,
+    awesome: Texture2d,
     program: Program,
 }
 
@@ -61,10 +63,12 @@ impl Bacon {
 
 impl Painter for Bacon {
     fn new(facade: &GlutinFacade) -> Result<Bacon> {
-        let suite = try!(Model::load(facade, "ruins/house.obj"));
+        let ruins = try!(Model::load(facade, "ruins/house.obj"));
+        let awesome = load_texture("./assets/textures/awesomeface.png");
         Ok(Bacon {
             projector: try!(Projector::new(facade)),
-            suite: suite,
+            ruins: ruins,
+            awesome: try!(Texture2d::new(facade, awesome)),
             program: try!(load_program(facade, "ruins/vertex.glsl", "ruins/fragment.glsl")),
         })
     }
@@ -74,9 +78,11 @@ impl Painter for Bacon {
             model: id().translate(vec3(0.0, -2.0, 0.0)),
             view: self.view(),
             projection: api.projection(),
+            projector_view: self.projector.camera.view(),
             light: [0.0f32, 0.0, 5.0],
+            awesome: &self.awesome,
         };
-        try!(self.suite.draw(api, &self.program, &uniforms));
+        try!(self.ruins.draw(api, &self.program, &uniforms));
         self.projector.draw(api, self)
     }
 
@@ -88,6 +94,7 @@ impl Painter for Bacon {
 
 struct Projector {
     camera: Camera,
+    frustrum: Frustrum,
     vertex_buffer: VertexBuffer<vertex::Vertex>,
     program: Program,
 }
@@ -98,15 +105,17 @@ impl Projector {
         let program = try!(load_program(facade, "proj/vertex.glsl", "proj/fragment.glsl"));
 
         Ok(Projector {
-            camera: Camera::new(vec3(0.0, 2.0, 0.0), vec3(0.0, 0.0, 0.0), Y),
+            camera: Camera::new(vec3(0.0, 2.0, 3.0), vec3(0.0, 0.0, 3.0), Y),
+            frustrum: try!(Frustrum::new(facade)),
             vertex_buffer: vertex_buffer,
             program: program,
         })
     }
 
     fn draw<S: Surface>(&self, api: &mut Api<S>, p: &Bacon) -> Result<()> {
+        try!(self.frustrum.draw(api, p));
         let uniforms = uniform! {
-            model: id().translate(self.camera.position()).scale(0.5) * self.camera.rotation(),
+            model: self.model(),
             view: p.view(),
             projection: api.projection(),
         };
@@ -117,7 +126,46 @@ impl Projector {
                                  &api.default_params)))
     }
 
-    pub fn process_event(&mut self, event: Event, delta_t: f32) {
+    fn model(&self) -> Mat4 {
+        id().translate(self.camera.position()).scale(0.25) * self.camera.rotation()
+    }
+
+    fn process_event(&mut self, event: Event, delta_t: f32) {
         self.camera.process_event(event, delta_t);
+    }
+}
+
+
+struct Frustrum {
+    vertex_buffer: VertexBuffer<vertex::Vertex>,
+    program: Program,
+}
+
+impl Frustrum {
+    fn new(facade: &GlutinFacade) -> Result<Frustrum> {
+        let vertex_buffer = try!(VertexBuffer::new(facade, &vertex::Vertex::many(models::cube())));
+        let program = try!(load_program(facade, "frustrum/vertex.glsl", "frustrum/fragment.glsl"));
+
+        Ok(Frustrum {
+            vertex_buffer: vertex_buffer,
+            program: program,
+        })
+    }
+
+    fn draw<S: Surface>(&self, api: &mut Api<S>, p: &Bacon) -> Result<()> {
+        let uniforms = uniform! {
+            model: id(),
+            view: p.view(),
+            projection: api.projection(),
+            projector_view: p.projector.camera.view(),
+        };
+        Ok(try!(api.surface.draw(&self.vertex_buffer,
+                                 &NoIndices(PrimitiveType::TrianglesList),
+                                 &self.program,
+                                 &uniforms,
+                                 &DrawParameters {
+                                     polygon_mode: PolygonMode::Line,
+                                     ..api.default_params.clone()
+                                 })))
     }
 }

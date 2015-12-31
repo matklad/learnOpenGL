@@ -5,6 +5,7 @@ use glium::index::BufferCreationError as IndexBufferCreationError;
 use glium::program::ProgramCreationError;
 use glium::vertex::BufferCreationError as VertexBufferCreationError;
 use glium::{SwapBuffersError, GliumCreationError, DrawError};
+use glium::texture::TextureCreationError;
 use glium::glutin::CreationError;
 use tobj::LoadError;
 use image::ImageError;
@@ -117,5 +118,11 @@ impl From<ProgramCreationError> for Oops {
 impl From<ImageError> for Oops {
     fn from(err: ImageError) -> Oops {
         oops("failed to read an image\n{}", err)
+    }
+}
+
+impl From<TextureCreationError> for Oops{
+    fn from (err: TextureCreationError) -> Oops{
+        Oops::from_debug("failed to crate a texture", err)
     }
 }
