@@ -67,18 +67,33 @@ impl Painter for Bacon {
 
     fn draw<S: Surface>(&self, api: &mut Api<S>) -> Result<()> {
         let (width, height) = (800, 600);
-        let albedo = try!(Texture2d::empty_with_format(api.facade,
-                                                       UncompressedFloatFormat::F32F32F32F32,
-                                                       MipmapsOption::NoMipmap,
-                                                       width,
-                                                       height));
+        let (albedo, specular, shininess, position, normal) = {
+            let make_texture = || {
+                Texture2d::empty_with_format(api.facade,
+                                             UncompressedFloatFormat::F32F32F32F32,
+                                             MipmapsOption::NoMipmap,
+                                             width,
+                                             height)
+            };
+
+            (try!(make_texture()),
+             try!(make_texture()),
+             try!(make_texture()),
+             try!(make_texture()),
+             try!(make_texture()))
+        };
+
         let depthtexture = DepthTexture2d::empty_with_format(api.facade,
                                                              DepthFormat::F32,
                                                              MipmapsOption::NoMipmap,
                                                              width,
                                                              height)
                                .unwrap();
-        let output = &[("color", &albedo)];
+        let output = &[("albedo", &albedo),
+                       ("specular", &specular),
+                       ("specular_k", &shininess),
+                       ("position", &position),
+                       ("normal", &normal)];
         let mut g_buffer = MultiOutputFrameBuffer::with_depth_buffer(api.facade,
                                                                      output.iter().cloned(),
                                                                      &depthtexture)
@@ -94,12 +109,19 @@ impl Painter for Bacon {
             model: id().scale(0.1),
             view: self.camera.view(),
             projection: api.projection(),
-            light: light_position,
         };
         try!(self.suite.draw(&mut g_buffer, &api.default_params, &self.program, &uniforms));
 
         let uniforms = uniform! {
-            albedo: &albedo
+            albedo: &albedo,
+            specular: &specular,
+            shininess: &shininess,
+            position: &position,
+            normal: &normal,
+            view: self.camera.view(),
+            projection: api.projection(),
+            light: light_position,
+            light_color: [0.2f32, 0.2, 0.2],
         };
         self.quad.draw(api.surface, &api.default_params, &uniforms)
     }
