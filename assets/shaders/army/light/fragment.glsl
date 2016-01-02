@@ -1,8 +1,7 @@
 #version 330
 
 uniform sampler2D albedo;
-uniform sampler2D specular;
-uniform sampler2D shininess;
+uniform sampler2D specular_shininess;
 uniform sampler2D normal;
 uniform sampler2D position;
 uniform vec3 light_color;
@@ -16,8 +15,9 @@ out vec4 color;
 
 void main() {
     vec3 model_albedo = texture(albedo, frag_texture).xyz;
-    vec3 model_specular = texture(specular, frag_texture).xyz;
-    float model_shininess = texture(shininess, frag_texture).x;
+    vec4 model_specular_shininess = texture(specular_shininess, frag_texture);
+    vec3 model_specular = model_specular_shininess.xyz;
+    float model_shininess = model_specular_shininess.w;
 
     float shininess = 32.0;
     vec3 model_position = texture(position, frag_texture).xyz;

@@ -10,15 +10,13 @@ in vec3 model_position;
 in vec2 model_texture;
 
 out vec4 albedo;
-out vec4 specular;
-out vec4 specular_k;
+out vec4 specular_shininess;
 out vec4 normal;
 out vec4 position;
 
 void main() {
     albedo = texture(texture_diffuse, model_texture);
-    specular = vec4(color_specular, 0.0);
-    specular_k = vec4(shininess, 0.0, 0.0, 0.0);
+    specular_shininess = vec4(color_specular, shininess);
     normal = vec4(normalize(model_normal), 0.0);
     position = vec4(model_position, 0.0);
 

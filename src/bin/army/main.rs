@@ -48,6 +48,51 @@ struct Bacon {
     suite: Model,
     program: Program,
     quad: Quad,
+    g_buffer: GBuffer,
+}
+
+struct GBuffer {
+    albedo: Texture2d,
+    specular_shininess: Texture2d,
+    position: Texture2d,
+    normal: Texture2d,
+    depth: DepthTexture2d,
+}
+
+impl GBuffer {
+    fn new(facade: &GlutinFacade) -> Result<GBuffer> {
+        let (width, height) = (800, 600);
+
+        let make_texture = || {
+            Texture2d::empty_with_format(facade,
+                                         UncompressedFloatFormat::F32F32F32F32,
+                                         MipmapsOption::NoMipmap,
+                                         width,
+                                         height)
+        };
+
+        Ok(GBuffer {
+            albedo: try!(make_texture()),
+            specular_shininess: try!(make_texture()),
+            position: try!(make_texture()),
+            normal: try!(make_texture()),
+            depth: DepthTexture2d::empty_with_format(facade,
+                                                     DepthFormat::F32,
+                                                     MipmapsOption::NoMipmap,
+                                                     width,
+                                                     height)
+                       .unwrap(),
+        })
+    }
+
+    fn buffer(&self, facade: &GlutinFacade) -> MultiOutputFrameBuffer {
+        let output = &[("albedo", &self.albedo),
+                       ("specular_shininess", &self.specular_shininess),
+                       ("position", &self.position),
+                       ("normal", &self.normal)];
+        MultiOutputFrameBuffer::with_depth_buffer(facade, output.iter().cloned(), &self.depth)
+            .unwrap()
+    }
 }
 
 impl Painter for Bacon {
@@ -58,6 +103,7 @@ impl Painter for Bacon {
             program: try!(load_program(facade, "army/geom/vertex.glsl", "army/geom/fragment.glsl")),
             suite: suite,
             quad: try!(Quad::new(facade)),
+            g_buffer: try!(GBuffer::new(facade)),
         })
     }
 
@@ -66,58 +112,38 @@ impl Painter for Bacon {
     }
 
     fn draw<S: Surface>(&self, api: &mut Api<S>) -> Result<()> {
-        let (width, height) = (800, 600);
-        let (albedo, specular, shininess, position, normal) = {
-            let make_texture = || {
-                Texture2d::empty_with_format(api.facade,
-                                             UncompressedFloatFormat::F32F32F32F32,
-                                             MipmapsOption::NoMipmap,
-                                             width,
-                                             height)
+        let mut g_buffer = self.g_buffer.buffer(api.facade);
+        g_buffer.clear_color_and_depth((0.0, 0.0, 0.0, 1.0), 1.0);
+
+        let positions = [vec3(0.0, -3.0, -3.0),
+                         vec3(3.0, -3.0, -3.0),
+                         vec3(-3.0, -3.0, 0.0),
+                         vec3(0.0, -3.0, 0.0),
+                         vec3(3.0, -3.0, 0.0),
+                         vec3(-3.0, -3.0, 3.0),
+                         vec3(0.0, -3.0, 3.0),
+                         vec3(3.0, -3.0, 3.0)];
+
+        for &pos in positions.into_iter() {
+            let uniforms = uniform! {
+                model: id().translate(pos).scale(0.2),
+                view: self.camera.view(),
+                projection: api.projection(),
             };
 
-            (try!(make_texture()),
-             try!(make_texture()),
-             try!(make_texture()),
-             try!(make_texture()),
-             try!(make_texture()))
-        };
-
-        let depthtexture = DepthTexture2d::empty_with_format(api.facade,
-                                                             DepthFormat::F32,
-                                                             MipmapsOption::NoMipmap,
-                                                             width,
-                                                             height)
-                               .unwrap();
-        let output = &[("albedo", &albedo),
-                       ("specular", &specular),
-                       ("specular_k", &shininess),
-                       ("position", &position),
-                       ("normal", &normal)];
-        let mut g_buffer = MultiOutputFrameBuffer::with_depth_buffer(api.facade,
-                                                                     output.iter().cloned(),
-                                                                     &depthtexture)
-                               .unwrap();
-
-        g_buffer.clear_color_and_depth((0.0, 0.0, 0.0, 1.0), 1.0);
+            try!(self.suite.draw(&mut g_buffer, &api.default_params, &self.program, &uniforms));
+        }
 
         let radius = 8.0;
         let light_position = [api.time.sin() * radius,
                               2.0 * api.time.sin(),
                               api.time.cos() * radius];
-        let uniforms = uniform! {
-            model: id().scale(0.1),
-            view: self.camera.view(),
-            projection: api.projection(),
-        };
-        try!(self.suite.draw(&mut g_buffer, &api.default_params, &self.program, &uniforms));
 
         let uniforms = uniform! {
-            albedo: &albedo,
-            specular: &specular,
-            shininess: &shininess,
-            position: &position,
-            normal: &normal,
+            albedo: &self.g_buffer.albedo,
+            specular_shininess: &self.g_buffer.specular_shininess,
+            position: &self.g_buffer.position,
+            normal: &self.g_buffer.normal,
             view: self.camera.view(),
             projection: api.projection(),
             light: light_position,
