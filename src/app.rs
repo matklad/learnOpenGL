@@ -50,8 +50,10 @@ impl<P: Painter> App<P> {
         let aspect_ratio = width as f32 / height as f32;
         let (r, g, b) = P::clear_color();
         target.clear_color_and_depth((r, g, b, 1.0), 1.0);
+        let result =
         {
             let mut api = Api {
+                facade: &self.facade,
                 surface: &mut target,
                 time: time,
                 aspect_ratio: aspect_ratio,
@@ -64,9 +66,10 @@ impl<P: Painter> App<P> {
                     ..Default::default()
                 },
             };
-            try!(self.painter.draw(&mut api));
-        }
+            self.painter.draw(&mut api)
+        };
         try!(target.finish());
+        try!(result);
         Ok(())
     }
 

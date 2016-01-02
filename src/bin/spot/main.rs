@@ -82,7 +82,7 @@ impl Painter for Bacon {
             light: [0.0f32, 0.0, 5.0],
             awesome: &self.awesome,
         };
-        try!(self.ruins.draw(api, &self.program, &uniforms));
+        try!(self.ruins.draw(api.surface, &api.default_params, &self.program, &uniforms));
         self.projector.draw(api, self)
     }
 

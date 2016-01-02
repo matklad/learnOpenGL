@@ -70,6 +70,6 @@ impl Painter for Bacon {
             projection: api.projection(),
             light: light_position,
         };
-        self.suite.draw(api, &self.program, &uniforms)
+        self.suite.draw(api.surface, &api.default_params, &self.program, &uniforms)
     }
 }

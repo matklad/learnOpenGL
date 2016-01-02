@@ -6,13 +6,13 @@ use std::collections::HashMap;
 use glium::backend::glutin_backend::GlutinFacade;
 use glium::uniforms::Uniforms;
 use glium::texture::Texture2d;
-use glium::{Surface, Program};
+use glium::{Surface, Program, DrawParameters};
 use itertools::Itertools;
 
 use assets::load_texture;
 use tobj::{self, Material};
 
-use {Api, Result};
+use {Result};
 
 mod mesh;
 
@@ -63,14 +63,15 @@ impl Model {
     }
 
     pub fn draw<S: Surface, U: Uniforms>(&self,
-                                         api: &mut Api<S>,
+                                         surface: &mut S,
+                                         params: &DrawParameters,
                                          program: &Program,
                                          uniforms: &U)
                                          -> Result<()> {
         for m in &self.meshes {
             let material = m.material_id.map(|i| &self.materials[i]);
             let tex = material.map(|m| &self.textures[&m.diffuse_texture]);
-            try!(m.draw(api, program, uniforms, material, tex))
+            try!(m.draw(surface, params, program, uniforms, material, tex))
         }
         Ok(())
     }

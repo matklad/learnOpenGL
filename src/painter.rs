@@ -16,6 +16,7 @@ pub trait Painter: Sized {
 }
 
 pub struct Api<'a, S: Surface + 'a> {
+    pub facade: &'a GlutinFacade,
     pub surface: &'a mut S,
     pub aspect_ratio: f32,
     pub time: f32,

@@ -1,10 +1,10 @@
 use glium::backend::glutin_backend::GlutinFacade;
 use glium::index::{PrimitiveType, IndexBuffer};
 use glium::uniforms::{Uniforms, UniformValue, AsUniformValue};
-use glium::{VertexBuffer, Surface, Texture2d, Program};
+use glium::{VertexBuffer, Surface, Texture2d, Program, DrawParameters};
 use tobj;
 
-use {Api, Result};
+use {Result};
 
 
 #[derive(Debug)]
@@ -41,14 +41,15 @@ impl Mesh {
         })
     }
     pub fn draw<S: Surface, U: Uniforms>(&self,
-                                         api: &mut Api<S>,
+                                         surface: &mut S,
+                                         params: &DrawParameters,
                                          program: &Program,
                                          uniforms: &U,
                                          material: Option<&tobj::Material>,
                                          texture: Option<&Texture2d>)
                                          -> Result<()> {
 
-        Ok(try!(api.surface.draw(&self.vertex_buffer,
+        Ok(try!(surface.draw(&self.vertex_buffer,
                                  &self.index_buffer,
                                  program,
                                  &MyUniform {
@@ -56,7 +57,7 @@ impl Mesh {
                                      texture: texture,
                                      u: uniforms,
                                  },
-                                 &api.default_params)))
+                                 params)))
     }
 }
 

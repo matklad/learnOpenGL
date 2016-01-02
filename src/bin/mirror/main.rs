@@ -79,7 +79,7 @@ impl Painter for Matisse {
             camera_position: self.camera.position_unif(),
             skybox: &self.skybox.cubemap,
         };
-        try!(self.bunny.draw(api, &self.program, &uniforms));
+        try!(self.bunny.draw(api.surface, &api.default_params, &self.program, &uniforms));
 
         let uniforms = uniform! {
             model: id().translate(vec3(0.0, -0.3, 0.0)),
@@ -88,7 +88,7 @@ impl Painter for Matisse {
             camera_position: self.camera.position_unif(),
             skybox: &self.skybox.cubemap,
         };
-        try!(self.cube.draw(api, &self.program, &uniforms));
+        try!(self.cube.draw(api.surface, &api.default_params, &self.program, &uniforms));
 
         Ok(())
     }

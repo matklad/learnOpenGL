@@ -18,6 +18,9 @@ tobj = "0.1"
 version = "0.13"
 features = ["glutin"]
 
+[profile.release]
+debug = true
+
 [[bin]]
 name = "mirror"
 path = "src/bin/mirror/main.rs"
@@ -29,3 +32,7 @@ path = "src/bin/crysis/main.rs"
 [[bin]]
 name = "spot"
 path = "src/bin/spot/main.rs"
+
+[[bin]]
+name = "army"
+path = "src/bin/army/main.rs"
