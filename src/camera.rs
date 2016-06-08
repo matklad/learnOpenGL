@@ -1,8 +1,8 @@
 use glium::glutin::{Event, ElementState, VirtualKeyCode};
 use cgmath::{Point3, Point, Matrix4, Vector, Vector2, EuclideanVector, vec2, vec3, Deg, Angle,
-             Quaternion, zero, Rotation3, Rad};
+             Quaternion, Rotation3, Rad};
 
-use math::{look_at, Vec3, Mat4};
+use math::{Vec3, Mat4};
 
 type Vec2 = Vector2<f32>;
 
